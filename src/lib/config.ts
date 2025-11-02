@@ -1,6 +1,7 @@
-import { AppConfig } from './types';
+// Legacy config - not used anymore (replaced by data-service.ts)
+// Kept for backward compatibility
 
-export const defaultConfig: AppConfig = {
+export const defaultConfig = {
   buildings: [
     { id: 'home', name: 'Home' },
     { id: 'hospital', name: 'Hospital' },
@@ -53,7 +54,7 @@ export const defaultConfig: AppConfig = {
   ],
 };
 
-export function validateConfig(config: any): config is AppConfig {
+export function validateConfig(config: any): boolean {
   return !!(config && Array.isArray(config.buildings) && Array.isArray(config.floors) && Array.isArray(config.rooms));
 }
 
