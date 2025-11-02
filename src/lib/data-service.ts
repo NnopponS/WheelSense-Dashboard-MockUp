@@ -10,17 +10,30 @@ import { Building, Floor, Room, Device, MeshRoute, Corridor } from './types';
 // ============================================
 
 export const DEFAULT_BUILDINGS: Building[] = [
-  { id: 'B1', name: 'Hospital (Main Campus)' },
   { id: 'B2', name: 'Smart Home Residence' },
+  { id: 'B1', name: 'Hospital (Main Campus)' },
 ];
 
 export const DEFAULT_FLOORS: Floor[] = [
+  { id: 'S-F1', name: 'Ground · Home', level: 1, buildingId: 'B2' },
   { id: 'H-F1', name: 'Level 1 · Ground', level: 1, buildingId: 'B1' },
   { id: 'H-F2', name: 'Level 2 · Clinical', level: 2, buildingId: 'B1' },
-  { id: 'S-F1', name: 'Ground · Home', level: 1, buildingId: 'B2' },
 ];
 
 export const DEFAULT_ROOMS: Room[] = [
+  // Smart Home - Updated from localStorage
+  { id: 's-garage1', name: 'Garage 1', x: 140, y: 60, width: 80, height: 500, color: '#e8e8ff', floorId: 'S-F1' },
+  { id: 's-frontdoor', name: 'Front Door', x: 220, y: 60, width: 100, height: 300, color: '#ffe8e8', floorId: 'S-F1' },
+  { id: 's-working', name: 'Working Room', x: 320, y: 60, width: 300, height: 120, color: '#e8ffe8', floorId: 'S-F1' },
+  { id: 's-bedroom', name: 'Bedroom', x: 620, y: 60, width: 240, height: 300, color: '#ffe8f4', floorId: 'S-F1' },
+  { id: 's-living', name: 'Living Room', x: 320, y: 180, width: 300, height: 180, color: '#e8f4ff', floorId: 'S-F1' },
+  { id: 's-extdoor', name: 'Exterior Door', x: 80, y: 360, width: 60, height: 200, color: '#fff4e8', floorId: 'S-F1' },
+  { id: 's-garage2', name: 'Garage 2', x: 220, y: 360, width: 300, height: 200, color: '#f4e8ff', floorId: 'S-F1' },
+  { id: 's-catsroom', name: 'Cats Room', x: 520, y: 360, width: 100, height: 80, color: '#fffde8', floorId: 'S-F1' },
+  { id: 's-2ndfloor', name: '2nd Floor', x: 620, y: 360, width: 240, height: 80, color: '#e8fff4', floorId: 'S-F1' },
+  { id: 's-kitchen', name: 'Kitchen', x: 520, y: 440, width: 340, height: 120, color: '#fff8e8', floorId: 'S-F1' },
+  { id: 's-bathroom', name: 'Bathroom', x: 320, y: 360, width: 200, height: 80, color: '#e8f4ff', floorId: 'S-F1' },
+  
   // Hospital - Ground Floor
   { id: 'h-lobby', name: 'Main Lobby', x: 60, y: 60, width: 360, height: 220, color: '#e6f2ff', floorId: 'H-F1', nodeId: 'N-01' },
   { id: 'h-reception', name: 'Registration', x: 60, y: 300, width: 220, height: 140, color: '#ecfeff', floorId: 'H-F1' },
@@ -32,18 +45,6 @@ export const DEFAULT_ROOMS: Room[] = [
   // Hospital - Floor 2
   { id: 'h-icu', name: 'ICU', x: 60, y: 60, width: 360, height: 200, color: '#fee2e2', floorId: 'H-F2' },
   { id: 'h-surgery', name: 'Surgery', x: 440, y: 60, width: 340, height: 200, color: '#fde68a', floorId: 'H-F2' },
-  
-  // Smart Home - Based on floor plan image
-  { id: 's-garage1', name: 'Garage 1', x: 180, y: 20, width: 80, height: 170, color: '#e8e8ff', floorId: 'S-F1' },
-  { id: 's-frontdoor', name: 'Front Door', x: 270, y: 20, width: 90, height: 80, color: '#ffe8e8', floorId: 'S-F1' },
-  { id: 's-working', name: 'Working Room', x: 360, y: 20, width: 120, height: 80, color: '#e8ffe8', floorId: 'S-F1' },
-  { id: 's-bedroom', name: 'Bedroom', x: 550, y: 20, width: 240, height: 160, color: '#ffe8f4', floorId: 'S-F1' },
-  { id: 's-living', name: 'Living Room', x: 360, y: 110, width: 180, height: 170, color: '#e8f4ff', floorId: 'S-F1' },
-  { id: 's-extdoor', name: 'Exterior Door', x: 170, y: 200, width: 20, height: 90, color: '#fff4e8', floorId: 'S-F1' },
-  { id: 's-garage2', name: 'Garage 2', x: 270, y: 200, width: 80, height: 80, color: '#f4e8ff', floorId: 'S-F1' },
-  { id: 's-catsroom', name: 'Cats Room', x: 480, y: 200, width: 60, height: 80, color: '#fffde8', floorId: 'S-F1' },
-  { id: 's-2ndfloor', name: '2nd Floor', x: 550, y: 200, width: 80, height: 80, color: '#e8fff4', floorId: 'S-F1' },
-  { id: 's-kitchen', name: 'Kitchen', x: 550, y: 290, width: 240, height: 250, color: '#fff8e8', floorId: 'S-F1' },
 ];
 
 export const DEFAULT_DEVICES: Device[] = [
@@ -96,6 +97,10 @@ export const DEFAULT_DEVICES: Device[] = [
   { id: 'A-kitchen-light1', name: 'Light 1', mac: '-', rssi: -30, type: 'appliance', status: 'online', room: 'Kitchen', applianceKind: 'light', power: 'off', value: 0 },
   { id: 'A-kitchen-light2', name: 'Light 2', mac: '-', rssi: -30, type: 'appliance', status: 'online', room: 'Kitchen', applianceKind: 'light', power: 'off', value: 0 },
   { id: 'A-kitchen-fan', name: 'Fan', mac: '-', rssi: -30, type: 'appliance', status: 'online', room: 'Kitchen', applianceKind: 'fan', power: 'off', value: 50 },
+  
+  // Smart Home - Bathroom
+  { id: 'A-bathroom-light1', name: 'Light 1', mac: '-', rssi: -30, type: 'appliance', status: 'online', room: 'Bathroom', applianceKind: 'light', power: 'off', value: 0 },
+  { id: 'A-bathroom-fan', name: 'Exhaust Fan', mac: '-', rssi: -30, type: 'appliance', status: 'online', room: 'Bathroom', applianceKind: 'fan', power: 'off', value: 50 },
   
   // Exterior Door
   { id: 'A-extdoor-door', name: 'Exterior Door', mac: '-', rssi: -30, type: 'appliance', status: 'online', room: 'Exterior Door', applianceKind: 'door', power: 'off' },
