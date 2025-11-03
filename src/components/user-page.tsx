@@ -78,150 +78,60 @@ export function UserPage() {
     ]
   );
 
-  // Apply device updates from localStorage (for cross-tab sync)
-  const applyDeviceUpdates = useCallback(() => {
-    try {
-      const deviceUpdatesStr = localStorage.getItem('wheelsense-demo-devices');
-      if (!deviceUpdatesStr) {
-        console.log('🔌 [User Dashboard] No device updates in localStorage');
+  // Sync demo state from Firebase - Real-time cross-device synchronization
+  useEffect(() => {
+    const handleDemoSync = () => {
+      console.log('🔥 [Firebase Sync] Demo state updated:', demoState);
+      
+      if (!demoState.isRunning || !demoState.currentStep) {
+        // No demo running
+        if (chatMessages.length > 1 || chatMessages[0]?.sender !== 'assistant') {
+          console.log('🛑 Demo stopped, resetting chat');
+          setChatMessages([
+            {
+              sender: 'assistant',
+              text: 'สวัสดีค่ะ! ฉันคือ AI Assistant ของคุณ 🤖\n\nพร้อมช่วยคุณแล้วค่ะ มีอะไรให้ช่วยไหมคะ?',
+            },
+          ]);
+          setCurrentRoom('Living Room');
+        }
         return;
       }
       
-      const deviceUpdates = JSON.parse(deviceUpdatesStr);
-      console.log('🔌 [User Dashboard] Applying device updates:', deviceUpdates);
-      console.log('🔌 [User Dashboard] Current devices count:', devices.length);
+      const step = demoState.currentStep;
+      console.log('✅ [Firebase Sync] Applying demo step:', step.sceneName, '→', step.room);
       
-      Object.entries(deviceUpdates).forEach(([deviceId, updates]) => {
-        console.log(`  🔧 Updating ${deviceId}:`, updates);
-        updateDevice(deviceId, updates as Partial<Device>);
-      });
+      // Update room
+      setCurrentRoom(step.room);
       
-      // Force re-render by triggering a dummy state update
+      // Clear old messages
+      setChatMessages([]);
+      
+      // Show "AI thinking" animation first
+      setIsAiThinking(true);
+          
       setTimeout(() => {
-        console.log('✅ [User Dashboard] Device updates applied, devices should be updated now');
-      }, 100);
-    } catch (error) {
-      console.error('❌ Error applying device updates:', error);
-    }
-  }, [devices.length, updateDevice]);
-  
-  // Alias for cross-tab sync
-  const applySyncUpdateDevices = applyDeviceUpdates;
-  
-  // Sync demo ACROSS TABS - use localStorage + storage event
-  useEffect(() => {
-    const handleDemoSync = (forceCheck = false) => {
-      try {
-        const savedState = localStorage.getItem('wheelsense-demo-state');
-        if (!savedState) {
-          // No demo running
-          if (chatMessages.length > 1 || chatMessages[0]?.sender !== 'assistant') {
-            console.log('🛑 Demo stopped (no state in localStorage), resetting chat');
-            setChatMessages([
-              {
-                sender: 'assistant',
-                text: 'สวัสดีค่ะ! ฉันคือ AI Assistant ของคุณ 🤖\n\nพร้อมช่วยคุณแล้วค่ะ มีอะไรให้ช่วยไหมคะ?',
-              },
-            ]);
-            setCurrentRoom('Living Room');
-          }
-          return;
-        }
-        
-        const demoState = JSON.parse(savedState);
-        console.log('🔄 [Cross-Tab Sync] Demo state:', demoState.currentStep?.sceneName);
-        
-        if (demoState.isRunning && demoState.currentStep) {
-          const step = demoState.currentStep;
-          
-          console.log('✅ [Cross-Tab] Syncing demo step:', step.sceneName, '→', step.room);
-          
-          // Update room
-          setCurrentRoom(step.room);
-          
-          // Clear old messages
-          setChatMessages([]);
-          
-          // Apply device updates for this step
-          applyDeviceUpdates();
-          
-          // Show "AI thinking" animation first
-          setIsAiThinking(true);
-          
+        // Display AI messages sequentially
+        step.aiMessages.forEach((msg, idx) => {
           setTimeout(() => {
-            setIsAiThinking(false);
-            
-            // Animate messages one by one
-            let messageIndex = 0;
-            const messageInterval = setInterval(() => {
-              if (messageIndex < step.aiMessages.length) {
-                console.log('📨 [Cross-Tab] Adding message:', messageIndex, step.aiMessages[messageIndex].text.substring(0, 30) + '...');
-                setChatMessages((prev) => [
-                  ...prev,
-                  {
-                    sender: step.aiMessages[messageIndex].sender,
-                    text: step.aiMessages[messageIndex].text,
-                    cardType: step.aiMessages[messageIndex].cardType,
-                    icon: step.aiMessages[messageIndex].icon,
-                  },
-                ]);
-                messageIndex++;
-              } else {
-                clearInterval(messageInterval);
-              }
-            }, 600);
-            
-            return () => clearInterval(messageInterval);
-          }, 800); // AI "thinking" for 800ms
-        }
-      } catch (error) {
-        console.error('Error syncing demo state:', error);
-      }
-    };
-
-    // 1. Check on mount (same tab)
-    handleDemoSync(true);
-    
-    // 2. Listen to storage event (CROSS-TAB sync!)
-    const handleStorageEvent = (e: StorageEvent) => {
-      if (e.key === 'wheelsense-demo-state') {
-        console.log('🌐 [Storage Event] Demo state changed from another tab!');
-        handleDemoSync(true);
-      } else if (e.key === 'wheelsense-demo-devices') {
-        console.log('🌐 [Storage Event] Demo devices changed from another tab!');
-        applySyncUpdateDevices();
-      }
+            setChatMessages((prev) => [
+              ...prev,
+              { sender: 'assistant', text: msg.message, cardType: msg.cardType, icon: msg.icon },
+            ]);
+          }, idx * 1200); // stagger by 1.2s each
+        });
+        
+        // After all messages
+        setTimeout(() => {
+          setIsAiThinking(false);
+        }, step.aiMessages.length * 1200);
+      }, 500);
     };
     
-    window.addEventListener('storage', handleStorageEvent);
+    // Run sync when demoState changes (real-time Firebase sync)
+    handleDemoSync();
     
-    // 3. Also listen to custom event (same tab)
-    const handleCustomEvent = () => {
-      console.log('🔔 [Custom Event] Demo state changed (same tab)');
-      handleDemoSync(true);
-    };
-    
-    const handleDevicesChangedEvent = () => {
-      console.log('🔔 [Custom Event] Demo devices changed (same tab)');
-      applyDeviceUpdates();
-    };
-    
-    window.addEventListener('demo-state-changed', handleCustomEvent);
-    window.addEventListener('demo-devices-changed', handleDevicesChangedEvent);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageEvent);
-      window.removeEventListener('demo-state-changed', handleCustomEvent);
-      window.removeEventListener('demo-devices-changed', handleDevicesChangedEvent);
-    };
-  }, []); // Run once on mount
-  
-  // Also watch context for same-tab updates (backup)
-  useEffect(() => {
-    if (demoState.isRunning && demoState.currentStep) {
-      console.log('📍 [Context] Demo state updated in same tab');
-    }
-  }, [demoState.currentStepIndex]);
+  }, [demoState, chatMessages.length]);
 
   // Timeline - Sync with Demo Sequence
   const [timeline, setTimeline] = useState<TimelineEntry[]>([

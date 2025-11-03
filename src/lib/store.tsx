@@ -9,9 +9,9 @@ import {
   DEFAULT_CORRIDORS,
   DataService 
 } from './data-service';
-import { useLocalStorage } from './hooks/useLocalStorage';
-import { STORAGE_KEYS, TIMING } from './constants';
+import { TIMING } from './constants';
 import { DemoSequenceStep } from './demo-sequences';
+import FirebaseService from './firebase-service';
 
 export interface EventLog {
   id: string;
@@ -99,39 +99,14 @@ interface StoreContextType {
 
 const StoreContext = createContext<StoreContextType | undefined>(undefined);
 
-const DATA_VERSION = '4'; // Incremented for clean refactor
-
 export function StoreProvider({ children }: { children: ReactNode }) {
-  // Use custom useLocalStorage hook with error handling
-  const [buildings, setBuildingsState] = useLocalStorage<Building[]>(
-    STORAGE_KEYS.buildings,
-    DEFAULT_BUILDINGS
-  );
-
-  const [floors, setFloorsState] = useLocalStorage<Floor[]>(
-    STORAGE_KEYS.floors,
-    DEFAULT_FLOORS
-  );
-
-  const [rooms, setRoomsState] = useLocalStorage<Room[]>(
-    STORAGE_KEYS.rooms,
-    DEFAULT_ROOMS
-  );
-
-  const [corridors, setCorridorsState] = useLocalStorage<Corridor[]>(
-    STORAGE_KEYS.corridors,
-    DEFAULT_CORRIDORS
-  );
-
-  const [devices, setDevicesState] = useLocalStorage<Device[]>(
-    STORAGE_KEYS.devices,
-    DEFAULT_DEVICES
-  );
-
-  const [meshRoutes, setMeshRoutesState] = useLocalStorage<MeshRoute[]>(
-    STORAGE_KEYS.meshRoutes,
-    DEFAULT_MESH_ROUTES
-  );
+  // State using Firebase instead of localStorage
+  const [buildings, setBuildingsState] = useState<Building[]>([]);
+  const [floors, setFloorsState] = useState<Floor[]>([]);
+  const [rooms, setRoomsState] = useState<Room[]>([]);
+  const [corridors, setCorridorsState] = useState<Corridor[]>([]);
+  const [devices, setDevicesState] = useState<Device[]>([]);
+  const [meshRoutes, setMeshRoutesState] = useState<MeshRoute[]>([]);
 
   const [wheelchairPositions, setWheelchairPositions] = useState<Map<number, WheelchairData>>(new Map());
   const [selectedItem, setSelectedItem] = useState<{ type: 'wheelchair' | 'node' | null; id: string | number | null }>({
@@ -152,173 +127,178 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     progress: 0,
   });
 
-  // Note: localStorage saving is now handled by useLocalStorage hook automatically
-
-  // Seed new default maps into existing localStorage data if missing
+  // Firebase Initialization - Load data on mount
   useEffect(() => {
-    // Only run once after initial load
-    const hasHospital = buildings.some((b) => b.id === 'B1');
-    const hasSmartHome = buildings.some((b) => b.id === 'B2');
+    console.log('🔄 Initializing data from Firebase...');
+    
+    const initializeData = async () => {
+      try {
+        // Initialize default data if Firebase is empty
+        await FirebaseService.initializeDefaultData(
+          DEFAULT_BUILDINGS,
+          DEFAULT_FLOORS,
+          DEFAULT_ROOMS,
+          DEFAULT_CORRIDORS,
+          DEFAULT_DEVICES,
+          DEFAULT_MESH_ROUTES
+        );
 
-    let updated = false;
+        // Load data from Firebase
+        const [
+          fbBuildings,
+          fbFloors,
+          fbRooms,
+          fbCorridors,
+          fbDevices,
+          fbMeshRoutes,
+        ] = await Promise.all([
+          FirebaseService.getBuildings(),
+          FirebaseService.getFloors(),
+          FirebaseService.getRooms(),
+          FirebaseService.getCorridors(),
+          FirebaseService.getDevices(),
+          FirebaseService.getMeshRoutes(),
+        ]);
 
-    if (!hasHospital || !hasSmartHome) {
-      const existingIds = new Set(buildings.map((b) => b.id));
-      const merged = [...buildings];
-      DEFAULT_BUILDINGS.forEach((b) => {
-        if (!existingIds.has(b.id)) {
-          merged.push(b);
-          existingIds.add(b.id);
-          updated = true;
-        }
-      });
-      // Normalize legacy names
-      const idxB1 = merged.findIndex((b) => b.id === 'B1');
-      if (idxB1 !== -1 && (merged[idxB1].name === 'Main Building' || merged[idxB1].name === 'Hospital')) {
-        merged[idxB1] = { ...merged[idxB1], name: 'Hospital (Main Campus)' };
-        updated = true;
+        setBuildingsState(fbBuildings);
+        setFloorsState(fbFloors);
+        setRoomsState(fbRooms);
+        setCorridorsState(fbCorridors);
+        setDevicesState(fbDevices);
+        setMeshRoutesState(fbMeshRoutes);
+
+        console.log('✅ Data loaded from Firebase');
+      } catch (error) {
+        console.error('❌ Error initializing Firebase data:', error);
       }
-      const idxB2 = merged.findIndex((b) => b.id === 'B2');
-      if (idxB2 !== -1 && merged[idxB2].name === 'Smart Home') {
-        merged[idxB2] = { ...merged[idxB2], name: 'Smart Home Residence' };
-        updated = true;
-      }
-      if (updated) setBuildingsState(merged);
-    }
+    };
 
-    // Floors
-    {
-      const existingFloorIds = new Set(floors.map((f) => f.id));
-      const mergedFloors = [...floors];
-      DEFAULT_FLOORS.forEach((f) => {
-        if (!existingFloorIds.has(f.id)) {
-          mergedFloors.push(f);
-          existingFloorIds.add(f.id);
-          updated = true;
-        }
-      });
-      if (updated) setFloorsState(mergedFloors);
-    }
-
-    // Rooms
-    {
-      const existingRoomIds = new Set(rooms.map((r) => r.id));
-      const mergedRooms = [...rooms];
-      DEFAULT_ROOMS.forEach((r) => {
-        if (!existingRoomIds.has(r.id)) {
-          mergedRooms.push(r);
-          existingRoomIds.add(r.id);
-          updated = true;
-        }
-      });
-      if (updated) setRoomsState(mergedRooms);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    initializeData();
   }, []);
 
-  // Versioned data bootstrap - Set version on first load but preserve user data
+  // Firebase Real-time Subscriptions
   useEffect(() => {
-    try {
-      const currentVersion = localStorage.getItem(STORAGE_KEYS.dataVersion);
-      if (!currentVersion) {
-        // Only set version on very first load, don't reset data
-        localStorage.setItem(STORAGE_KEYS.dataVersion, DATA_VERSION);
+    console.log('🔔 Setting up Firebase subscriptions...');
+
+    const unsubscribeBuildings = FirebaseService.subscribeToBuildings((data) => {
+      console.log('📦 Buildings updated from Firebase');
+      setBuildingsState(data);
+    });
+
+    const unsubscribeFloors = FirebaseService.subscribeToFloors((data) => {
+      console.log('📦 Floors updated from Firebase');
+      setFloorsState(data);
+    });
+
+    const unsubscribeRooms = FirebaseService.subscribeToRooms((data) => {
+      console.log('📦 Rooms updated from Firebase');
+      setRoomsState(data);
+    });
+
+    const unsubscribeCorridors = FirebaseService.subscribeToCorridors((data) => {
+      console.log('📦 Corridors updated from Firebase');
+      setCorridorsState(data);
+    });
+
+    const unsubscribeDevices = FirebaseService.subscribeToDevices((data) => {
+      console.log('📦 Devices updated from Firebase');
+      setDevicesState(data);
+    });
+
+    const unsubscribeMeshRoutes = FirebaseService.subscribeToMeshRoutes((data) => {
+      console.log('📦 Mesh routes updated from Firebase');
+      setMeshRoutesState(data);
+    });
+
+    const unsubscribeDemoState = FirebaseService.subscribeToDemoState((data) => {
+      if (data) {
+        console.log('🎬 Demo state updated from Firebase');
+        setDemoState(data);
       }
-      // NOTE: We intentionally don't reset data when version changes
-      // This preserves user edits across dev server restarts
-      // Users can manually reset via Settings if needed
+    });
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      console.log('🔕 Cleaning up Firebase subscriptions');
+      unsubscribeBuildings();
+      unsubscribeFloors();
+      unsubscribeRooms();
+      unsubscribeCorridors();
+      unsubscribeDevices();
+      unsubscribeMeshRoutes();
+      unsubscribeDemoState();
+    };
+  }, []);
+
+  const resetDemoData = useCallback(async () => {
+    try {
+      await Promise.all([
+        FirebaseService.saveBuildings(DEFAULT_BUILDINGS),
+        FirebaseService.saveFloors(DEFAULT_FLOORS),
+        FirebaseService.saveRooms(DEFAULT_ROOMS),
+        FirebaseService.saveCorridors(DEFAULT_CORRIDORS),
+        FirebaseService.saveDevices(DEFAULT_DEVICES),
+        FirebaseService.saveMeshRoutes(DEFAULT_MESH_ROUTES),
+      ]);
+      console.log('✅ Demo data reset in Firebase');
     } catch (error) {
-      console.error('Error checking data version:', error);
+      console.error('❌ Error resetting demo data:', error);
     }
   }, []);
 
-  // Save to localStorage whenever data changes
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.rooms, JSON.stringify(rooms));
-    } catch (error) {
-      console.error('Error saving rooms:', error);
-    }
-  }, [rooms]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.buildings, JSON.stringify(buildings));
-    } catch (error) {
-      console.error('Error saving buildings:', error);
-    }
-  }, [buildings]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEYS.floors, JSON.stringify(floors));
-    } catch (error) {
-      console.error('Error saving floors:', error);
-    }
-  }, [floors]);
-
-  const resetDemoData = useCallback(() => {
-    try {
-      setBuildingsState(DEFAULT_BUILDINGS);
-      setFloorsState(DEFAULT_FLOORS);
-      setRoomsState(DEFAULT_ROOMS);
-      setCorridorsState(DEFAULT_CORRIDORS);
-      setDevicesState(DEFAULT_DEVICES);
-      setMeshRoutesState(DEFAULT_MESH_ROUTES);
-      localStorage.setItem(STORAGE_KEYS.dataVersion, DATA_VERSION);
-    } catch (error) {
-      console.error('Error resetting demo data:', error);
-    }
-  }, [setBuildingsState, setFloorsState, setRoomsState, setCorridorsState, setDevicesState, setMeshRoutesState]);
-
-  const setBuildings = useCallback((newBuildings: Building[]) => {
+  const setBuildings = useCallback(async (newBuildings: Building[]) => {
     setBuildingsState(newBuildings);
+    await FirebaseService.saveBuildings(newBuildings);
   }, []);
 
-  const setFloors = useCallback((newFloors: Floor[]) => {
+  const setFloors = useCallback(async (newFloors: Floor[]) => {
     setFloorsState(newFloors);
+    await FirebaseService.saveFloors(newFloors);
   }, []);
 
-  const setRooms = useCallback((newRooms: Room[]) => {
+  const setRooms = useCallback(async (newRooms: Room[]) => {
     setRoomsState(newRooms);
+    await FirebaseService.saveRooms(newRooms);
   }, []);
 
-  const updateRoom = useCallback((roomId: string, updates: Partial<Room>) => {
-    setRoomsState((prev) => prev.map((room) => (room.id === roomId ? { ...room, ...updates } : room)));
+  const updateRoom = useCallback(async (roomId: string, updates: Partial<Room>) => {
+    await FirebaseService.updateRoom(roomId, updates);
+    // State will be updated by Firebase subscription
   }, []);
 
-  const setCorridors = useCallback((newCorridors: Corridor[]) => {
+  const setCorridors = useCallback(async (newCorridors: Corridor[]) => {
     setCorridorsState(newCorridors);
+    await FirebaseService.saveCorridors(newCorridors);
   }, []);
 
-  const updateCorridor = useCallback((corridorId: string, updates: Partial<Corridor>) => {
-    setCorridorsState((prev) => prev.map((corridor) => (corridor.id === corridorId ? { ...corridor, ...updates } : corridor)));
+  const updateCorridor = useCallback(async (corridorId: string, updates: Partial<Corridor>) => {
+    await FirebaseService.updateCorridor(corridorId, updates);
+    // State will be updated by Firebase subscription
   }, []);
 
-  const deleteCorridor = useCallback((corridorId: string) => {
-    setCorridorsState((prev) => prev.filter((corridor) => corridor.id !== corridorId));
+  const deleteCorridor = useCallback(async (corridorId: string) => {
+    await FirebaseService.deleteCorridor(corridorId);
+    // State will be updated by Firebase subscription
   }, []);
 
-  const setDevices = useCallback((newDevices: Device[]) => {
+  const setDevices = useCallback(async (newDevices: Device[]) => {
     setDevicesState(newDevices);
+    await FirebaseService.saveDevices(newDevices);
   }, []);
 
-  const updateDevice = useCallback((deviceId: string, updates: Partial<Device>) => {
-    setDevicesState((prev) => prev.map((device) => (device.id === deviceId ? { ...device, ...updates } : device)));
+  const updateDevice = useCallback(async (deviceId: string, updates: Partial<Device>) => {
+    await FirebaseService.updateDevice(deviceId, updates);
+    // State will be updated by Firebase subscription
   }, []);
 
-  const setMeshRoutes = useCallback((routes: MeshRoute[]) => {
+  const setMeshRoutes = useCallback(async (routes: MeshRoute[]) => {
     setMeshRoutesState(routes);
+    await FirebaseService.saveMeshRoutes(routes);
   }, []);
 
-  const updateMeshRoute = useCallback((nodeId: string, newPath: string[]) => {
-    setMeshRoutesState((prev) =>
-      prev.map((route) =>
-        route.nodeId === nodeId
-          ? { ...route, path: newPath, hopCount: newPath.length - 1 }
-          : route
-      )
-    );
+  const updateMeshRoute = useCallback(async (nodeId: string, newPath: string[]) => {
+    await FirebaseService.updateMeshRoute(nodeId, newPath);
+    // State will be updated by Firebase subscription
   }, []);
 
   const updateWheelchairPosition = useCallback((wheelId: number, data: WheelchairData) => {
@@ -367,11 +347,11 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const unreadCount = notifications.filter((n) => !n.read).length;
 
   // Enhanced updateDevice with logging
-  const updateDeviceWithLog = useCallback((deviceId: string, updates: Partial<Device>) => {
+  const updateDeviceWithLog = useCallback(async (deviceId: string, updates: Partial<Device>) => {
     const device = devices.find((d) => d.id === deviceId);
     if (!device) return;
 
-    updateDevice(deviceId, updates);
+    await updateDevice(deviceId, updates);
 
     // Log the event
     if (updates.power !== undefined && updates.power !== device.power) {
@@ -428,7 +408,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     clearNotifications,
     unreadCount,
     demoState,
-    setDemoState,
+    setDemoState: async (newDemoState: DemoState) => {
+      setDemoState(newDemoState);
+      await FirebaseService.saveDemoState(newDemoState);
+    },
     resetDemoData,
   };
 

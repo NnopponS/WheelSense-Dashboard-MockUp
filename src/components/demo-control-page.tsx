@@ -23,20 +23,20 @@ export function DemoControlPage() {
   const currentStep = sequence.steps[currentStepIndex] || sequence.steps[0];
 
   // Execute step - Simple version (no auto-play, just click)
-  const executeStep = (step: DemoSequenceStep, stepIndex: number) => {
+  const executeStep = async (step: DemoSequenceStep, stepIndex: number) => {
     console.log('🎬 [Demo Control] Executing step:', stepIndex, step.sceneName);
     
-    // Update devices และบันทึก device states
+    // Update devices - Firebase will sync automatically
     console.log('🔧 [Demo Control] Updating devices:', step.actions.length);
-    const deviceUpdates: Record<string, Partial<Device>> = {};
     
-    step.actions.forEach(({ deviceId, updates }) => {
+    const updatePromises = step.actions.map(({ deviceId, updates }) => {
       console.log(`  → Device ${deviceId}:`, updates);
-      updateDevice(deviceId, updates);
-      deviceUpdates[deviceId] = updates;
+      return updateDevice(deviceId, updates);
     });
 
-    // Update global demo state
+    await Promise.all(updatePromises);
+
+    // Update global demo state - Firebase will sync to all connected devices
     const newDemoState = {
       isRunning: true,
       currentStep: step,
@@ -44,37 +44,21 @@ export function DemoControlPage() {
       progress: 0,
     };
     
-    setDemoState(newDemoState);
+    await setDemoState(newDemoState);
     
-    // Save to localStorage for cross-tab sync
-    try {
-      localStorage.setItem('wheelsense-demo-state', JSON.stringify(newDemoState));
-      
-      // IMPORTANT: บันทึก device updates เพื่อ sync ข้าม tabs
-      localStorage.setItem('wheelsense-demo-devices', JSON.stringify(deviceUpdates));
-      
-      console.log('💾 [Demo Control] Saved to localStorage + dispatching event');
-      
-      // Dispatch custom events
-      window.dispatchEvent(new Event('demo-state-changed'));
-      window.dispatchEvent(new Event('demo-devices-changed')); // New event for device sync
-      
-      console.log('📡 [Demo Control] Events dispatched - other tabs will receive StorageEvent');
-    } catch (error) {
-      console.error('Error saving demo state:', error);
-    }
+    console.log('🔥 [Demo Control] State saved to Firebase - will sync to all devices');
 
     toast.success(`🎬 ${step.sceneName}`);
   };
 
   // Simple: Click timeline item to execute
-  const handleStepClick = (index: number) => {
+  const handleStepClick = async (index: number) => {
     setCurrentStepIndex(index);
     const step = sequence.steps[index];
-    executeStep(step, index);
+    await executeStep(step, index);
   };
 
-  const handleStop = () => {
+  const handleStop = async () => {
     setCurrentStepIndex(0);
     const stoppedState = {
       isRunning: false,
@@ -82,15 +66,9 @@ export function DemoControlPage() {
       currentStepIndex: 0,
       progress: 0,
     };
-    setDemoState(stoppedState);
+    await setDemoState(stoppedState);
     
-    // Clear localStorage
-    try {
-      localStorage.setItem('wheelsense-demo-state', JSON.stringify(stoppedState));
-      window.dispatchEvent(new Event('demo-state-changed'));
-    } catch (error) {
-      console.error('Error clearing demo state:', error);
-    }
+    console.log('🛑 [Demo Control] Demo stopped - synced to Firebase');
   };
 
 

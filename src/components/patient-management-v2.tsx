@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -23,56 +23,44 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import FirebaseService, { Patient } from '../lib/firebase-service';
 
-interface Patient {
-  id: string;
-  name: string;
-  age: number;
-  gender: 'male' | 'female' | 'other';
-  condition: string;
-  wheelchairId?: string;
-  room: string;
-  admissionDate: string;
-  status: 'active' | 'discharged' | 'emergency';
-  doctorNotes: string;
-  medications: string[];
-  emergencyContact: string;
-  phone: string;
-}
+// Default patients for initialization
+const DEFAULT_PATIENTS: Patient[] = [
+  {
+    id: 'P001',
+    name: 'สมชาย ใจดี',
+    age: 45,
+    gender: 'male',
+    condition: 'อุบัติเหตุ - บาดเจ็บที่ขา',
+    wheelchairId: 'W-01',
+    room: 'Bedroom',
+    admissionDate: '2025-10-15',
+    status: 'active',
+    doctorNotes: 'ฟื้นฟูสภาพดี ควรออกกำลังกายวันละ 30 นาที',
+    medications: ['ยาแก้ปวด 2 เม็ด/วัน', 'วิตามินบี 1 เม็ด/เช้า'],
+    emergencyContact: 'สมหญิง ใจดี (ภรรยา)',
+    phone: '081-234-5678',
+  },
+  {
+    id: 'P002',
+    name: 'สมหญิง รักษ์ดี',
+    age: 62,
+    gender: 'female',
+    condition: 'โรคข้อเสื่อม',
+    wheelchairId: 'W-02',
+    room: 'Wards',
+    admissionDate: '2025-11-01',
+    status: 'active',
+    doctorNotes: 'ควรหลีกเลี่ยงการยืนนานเกินไป',
+    medications: ['ยาลดการอักเสบ 3 เม็ด/วัน'],
+    emergencyContact: 'สมชาย รักษ์ดี (ลูกชาย)',
+    phone: '082-345-6789',
+  },
+];
 
 export function PatientManagementV2() {
-  const [patients, setPatients] = useState<Patient[]>([
-    {
-      id: 'P001',
-      name: 'สมชาย ใจดี',
-      age: 45,
-      gender: 'male',
-      condition: 'อุบัติเหตุ - บาดเจ็บที่ขา',
-      wheelchairId: 'W-01',
-      room: 'Bedroom',
-      admissionDate: '2025-10-15',
-      status: 'active',
-      doctorNotes: 'ฟื้นฟูสภาพดี ควรออกกำลังกายวันละ 30 นาที',
-      medications: ['ยาแก้ปวด 2 เม็ด/วัน', 'วิตามินบี 1 เม็ด/เช้า'],
-      emergencyContact: 'สมหญิง ใจดี (ภรรยา)',
-      phone: '081-234-5678',
-    },
-    {
-      id: 'P002',
-      name: 'สมหญิง รักษ์ดี',
-      age: 62,
-      gender: 'female',
-      condition: 'โรคข้อเสื่อม',
-      wheelchairId: 'W-02',
-      room: 'Wards',
-      admissionDate: '2025-11-01',
-      status: 'active',
-      doctorNotes: 'ควรหลีกเลี่ยงการยืนนานเกินไป',
-      medications: ['ยาลดการอักเสบ 3 เม็ด/วัน'],
-      emergencyContact: 'สมชาย รักษ์ดี (ลูกชาย)',
-      phone: '082-345-6789',
-    },
-  ]);
+  const [patients, setPatients] = useState<Patient[]>([]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -92,6 +80,43 @@ export function PatientManagementV2() {
     phone: '',
   });
 
+  // Initialize and subscribe to Firebase patients data
+  useEffect(() => {
+    console.log('🔄 Loading patients from Firebase...');
+    
+    const initializePatients = async () => {
+      try {
+        const existingPatients = await FirebaseService.getPatients();
+        
+        // Initialize with default patients if empty
+        if (existingPatients.length === 0) {
+          console.log('📦 Initializing default patients...');
+          await FirebaseService.savePatients(DEFAULT_PATIENTS);
+          setPatients(DEFAULT_PATIENTS);
+        } else {
+          setPatients(existingPatients);
+        }
+        
+        console.log('✅ Patients loaded from Firebase');
+      } catch (error) {
+        console.error('❌ Error loading patients:', error);
+      }
+    };
+
+    initializePatients();
+
+    // Subscribe to real-time updates
+    const unsubscribe = FirebaseService.subscribeToPatients((data) => {
+      console.log('📦 Patients updated from Firebase');
+      setPatients(data);
+    });
+
+    return () => {
+      console.log('🔕 Cleaning up patients subscription');
+      unsubscribe();
+    };
+  }, []);
+
   const filteredPatients = patients.filter(
     (p) =>
       p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -99,7 +124,7 @@ export function PatientManagementV2() {
       p.condition.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleAddPatient = () => {
+  const handleAddPatient = async () => {
     if (!newPatient.name || !newPatient.age) {
       toast.error('กรุณากรอกข้อมูลให้ครบถ้วน');
       return;
@@ -120,39 +145,54 @@ export function PatientManagementV2() {
       phone: newPatient.phone || '',
     };
 
-    setPatients([...patients, patient]);
-    setNewPatient({
-      name: '',
-      age: 0,
-      gender: 'male',
-      condition: '',
-      room: 'Bedroom',
-      status: 'active',
-      doctorNotes: '',
-      medications: [],
-      emergencyContact: '',
-      phone: '',
-    });
-    setShowAddDialog(false);
-    toast.success(`เพิ่มผู้ป่วย ${patient.name} สำเร็จ`);
+    try {
+      await FirebaseService.addPatient(patient);
+      setNewPatient({
+        name: '',
+        age: 0,
+        gender: 'male',
+        condition: '',
+        room: 'Bedroom',
+        status: 'active',
+        doctorNotes: '',
+        medications: [],
+        emergencyContact: '',
+        phone: '',
+      });
+      setShowAddDialog(false);
+      toast.success(`เพิ่มผู้ป่วย ${patient.name} สำเร็จ`);
+    } catch (error) {
+      console.error('Error adding patient:', error);
+      toast.error('เกิดข้อผิดพลาดในการเพิ่มผู้ป่วย');
+    }
   };
 
-  const handleUpdatePatient = () => {
+  const handleUpdatePatient = async () => {
     if (!editingPatient) return;
 
-    setPatients(patients.map((p) => (p.id === editingPatient.id ? editingPatient : p)));
-    setSelectedPatient(editingPatient);
-    setEditingPatient(null);
-    toast.success('อัพเดทข้อมูลสำเร็จ');
+    try {
+      await FirebaseService.updatePatient(editingPatient.id, editingPatient);
+      setSelectedPatient(editingPatient);
+      setEditingPatient(null);
+      toast.success('อัพเดทข้อมูลสำเร็จ');
+    } catch (error) {
+      console.error('Error updating patient:', error);
+      toast.error('เกิดข้อผิดพลาดในการอัพเดทข้อมูล');
+    }
   };
 
-  const handleDeletePatient = (patientId: string) => {
+  const handleDeletePatient = async (patientId: string) => {
     if (window.confirm('ต้องการลบผู้ป่วยนี้?')) {
-      setPatients(patients.filter((p) => p.id !== patientId));
-      if (selectedPatient?.id === patientId) {
-        setSelectedPatient(null);
+      try {
+        await FirebaseService.deletePatient(patientId);
+        if (selectedPatient?.id === patientId) {
+          setSelectedPatient(null);
+        }
+        toast.success('ลบผู้ป่วยสำเร็จ');
+      } catch (error) {
+        console.error('Error deleting patient:', error);
+        toast.error('เกิดข้อผิดพลาดในการลบผู้ป่วย');
       }
-      toast.success('ลบผู้ป่วยสำเร็จ');
     }
   };
 
