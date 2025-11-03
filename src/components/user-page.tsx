@@ -78,60 +78,74 @@ export function UserPage() {
     ]
   );
 
+  // Track last processed step to prevent re-processing
+  const lastProcessedStepRef = useRef<string | null>(null);
+  
   // Sync demo state from Firebase - Real-time cross-device synchronization
   useEffect(() => {
-    const handleDemoSync = () => {
-      console.log('🔥 [Firebase Sync] Demo state updated:', demoState);
-      
-      if (!demoState.isRunning || !demoState.currentStep) {
-        // No demo running
-        if (chatMessages.length > 1 || chatMessages[0]?.sender !== 'assistant') {
-          console.log('🛑 Demo stopped, resetting chat');
-          setChatMessages([
-            {
-              sender: 'assistant',
-              text: 'สวัสดีค่ะ! ฉันคือ AI Assistant ของคุณ 🤖\n\nพร้อมช่วยคุณแล้วค่ะ มีอะไรให้ช่วยไหมคะ?',
-            },
-          ]);
-          setCurrentRoom('Living Room');
-        }
-        return;
-      }
-      
-      const step = demoState.currentStep;
-      console.log('✅ [Firebase Sync] Applying demo step:', step.sceneName, '→', step.room);
-      
-      // Update room
-      setCurrentRoom(step.room);
-      
-      // Clear old messages
-      setChatMessages([]);
-      
-      // Show "AI thinking" animation first
-      setIsAiThinking(true);
-          
-      setTimeout(() => {
-        // Display AI messages sequentially
-        step.aiMessages.forEach((msg, idx) => {
-          setTimeout(() => {
-            setChatMessages((prev) => [
-              ...prev,
-              { sender: 'assistant', text: msg.message, cardType: msg.cardType, icon: msg.icon },
-            ]);
-          }, idx * 1200); // stagger by 1.2s each
-        });
-        
-        // After all messages
+    console.log('🔥 [Firebase Sync] Demo state updated:', demoState);
+    
+    if (!demoState.isRunning || !demoState.currentStep) {
+      // No demo running - reset to initial state
+      console.log('🛑 Demo stopped, resetting chat');
+      setChatMessages([
+        {
+          sender: 'assistant',
+          text: 'สวัสดีค่ะ! ฉันคือ AI Assistant ของคุณ 🤖\n\nพร้อมช่วยคุณแล้วค่ะ มีอะไรให้ช่วยไหมคะ?',
+        },
+      ]);
+      setCurrentRoom('Living Room');
+      setIsAiThinking(false);
+      lastProcessedStepRef.current = null;
+      return;
+    }
+    
+    const step = demoState.currentStep;
+    const stepId = step.id || step.sceneName;
+    
+    // Skip if we've already processed this step
+    if (lastProcessedStepRef.current === stepId) {
+      console.log('⏭️ [Firebase Sync] Step already processed, skipping:', stepId);
+      return;
+    }
+    
+    console.log('✅ [Firebase Sync] Applying new demo step:', step.sceneName, '→', step.room);
+    lastProcessedStepRef.current = stepId;
+    
+    // Update room
+    setCurrentRoom(step.room);
+    
+    // Clear old messages
+    setChatMessages([]);
+    
+    // Check if step has AI messages
+    if (!step.aiMessages || step.aiMessages.length === 0) {
+      console.warn('⚠️ Step has no AI messages, skipping AI animation');
+      setIsAiThinking(false);
+      return;
+    }
+    
+    // Show "AI thinking" animation first
+    setIsAiThinking(true);
+    
+    setTimeout(() => {
+      // Display AI messages sequentially
+      step.aiMessages.forEach((msg, idx) => {
         setTimeout(() => {
-          setIsAiThinking(false);
-        }, step.aiMessages.length * 1200);
-      }, 500);
-    };
+          setChatMessages((prev) => [
+            ...prev,
+            { sender: 'assistant', text: msg.message, cardType: msg.cardType, icon: msg.icon },
+          ]);
+        }, idx * 1200); // stagger by 1.2s each
+      });
+      
+      // After all messages, stop thinking animation
+      setTimeout(() => {
+        setIsAiThinking(false);
+      }, step.aiMessages.length * 1200);
+    }, 500);
     
-    // Run sync when demoState changes (real-time Firebase sync)
-    handleDemoSync();
-    
-  }, [demoState, chatMessages.length]);
+  }, [demoState.isRunning, demoState.currentStepIndex]);
 
   // Timeline - Sync with Demo Sequence
   const [timeline, setTimeline] = useState<TimelineEntry[]>([
