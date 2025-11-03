@@ -120,30 +120,19 @@ export function UserPage() {
     
     // Check if step has AI messages
     if (!step.aiMessages || step.aiMessages.length === 0) {
-      console.warn('⚠️ Step has no AI messages, skipping AI animation');
-      setIsAiThinking(false);
+      console.warn('⚠️ Step has no AI messages, skipping');
       return;
     }
     
-    // Show "AI thinking" animation first
-    setIsAiThinking(true);
-    
-    setTimeout(() => {
-      // Display AI messages sequentially
-      step.aiMessages.forEach((msg, idx) => {
-        setTimeout(() => {
-          setChatMessages((prev) => [
-            ...prev,
-            { sender: 'assistant', text: msg.message, cardType: msg.cardType, icon: msg.icon },
-          ]);
-        }, idx * 1200); // stagger by 1.2s each
-      });
-      
-      // After all messages, stop thinking animation
+    // Display AI messages immediately (no thinking animation)
+    step.aiMessages.forEach((msg, idx) => {
       setTimeout(() => {
-        setIsAiThinking(false);
-      }, step.aiMessages.length * 1200);
-    }, 500);
+        setChatMessages((prev) => [
+          ...prev,
+          { sender: msg.sender, text: msg.text, cardType: msg.cardType, icon: msg.icon },
+        ]);
+      }, idx * 800); // stagger by 0.8s each
+    });
     
   }, [demoState.isRunning, demoState.currentStepIndex]);
 
