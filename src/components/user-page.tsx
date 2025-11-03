@@ -420,32 +420,26 @@ export function UserPage() {
   }
 
   return (
-    <div className="h-full flex flex-col gap-4 p-4 bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Header with User Profile */}
+    <div className="h-full flex flex-col gap-2 md:gap-4 p-2 md:p-4 bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Header with User Profile - Mobile Optimized */}
       <Card className="shadow-lg border-none bg-gradient-to-r from-[#0056B3] to-[#00945E]">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-16 w-16 border-4 border-white shadow-lg">
-                <AvatarFallback className="bg-white text-[#0056B3] text-2xl font-bold">
+        <CardHeader className="pb-2 md:pb-3 px-3 md:px-6">
+          <div className="flex items-center justify-between flex-wrap gap-2 md:gap-3">
+            <div className="flex items-center gap-2 md:gap-4">
+              <Avatar className="h-12 w-12 md:h-16 md:w-16 border-2 md:border-4 border-white shadow-lg shrink-0">
+                <AvatarFallback className="bg-white text-[#0056B3] text-lg md:text-2xl font-bold">
                   {userProfile.name.charAt(0)}
                 </AvatarFallback>
               </Avatar>
-              <div className="text-white">
-                <h2 className="text-2xl font-bold">{userProfile.name}</h2>
-                <p className="text-white/80">อายุ {userProfile.age} ปี • {userProfile.condition}</p>
+              <div className="text-white min-w-0">
+                <h2 className="text-base md:text-2xl font-bold truncate">{userProfile.name}</h2>
+                <p className="text-white/80 text-xs md:text-sm">อายุ {userProfile.age} ปี • {userProfile.condition}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {demoState.isRunning && (
-                <div className="flex items-center gap-2 px-4 py-2 bg-white/20 rounded-lg backdrop-blur-sm">
-                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-                  <span className="text-white font-medium">🎬 Demo Running</span>
-                </div>
-              )}
-              {/* User Selector */}
+            <div className="flex items-center gap-2 md:gap-3">
+              {/* User Selector - Mobile Optimized */}
               <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                <SelectTrigger className="w-[200px] bg-white/20 text-white border-white/30">
+                <SelectTrigger className="w-[140px] md:w-[200px] h-8 md:h-10 text-xs md:text-sm bg-white/20 text-white border-white/30">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -461,37 +455,37 @@ export function UserPage() {
         </CardHeader>
       </Card>
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-4 overflow-hidden">
         {/* Left Column: Map & Controls */}
-        <div className="lg:col-span-2 space-y-4">
-          {/* Map */}
+        <div className="lg:col-span-2 space-y-2 md:space-y-4">
+          {/* Map - Mobile Optimized */}
           <Card className="shadow-lg">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between flex-wrap gap-2">
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <MapPin className="h-4 w-4 text-[#0056B3]" />
+            <CardHeader className="pb-1 md:pb-2 px-3 md:px-6">
+              <div className="flex items-center justify-between flex-wrap gap-1 md:gap-2">
+                <CardTitle className="flex items-center gap-1.5 md:gap-2 text-sm md:text-base">
+                  <MapPin className="h-3 w-3 md:h-4 md:w-4 text-[#0056B3]" />
                   แผนที่บ้าน
                 </CardTitle>
-                <div className="flex items-center gap-2">
-                  <Badge variant="default" className="bg-[#00945E] text-xs">
-                    <MapPin className="mr-1 h-3 w-3" />
+                <div className="flex items-center gap-1 md:gap-2">
+                  <Badge variant="default" className="bg-[#00945E] text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                    <MapPin className="mr-0.5 md:mr-1 h-2 w-2 md:h-3 md:w-3" />
                     {currentRoom}
                   </Badge>
-                  {/* Zoom Controls */}
-                  <Button size="sm" variant="outline" onClick={zoomOut} className="h-7 w-7 p-0">
-                    <ZoomOut className="h-3 w-3" />
+                  {/* Zoom Controls - Compact */}
+                  <Button size="sm" variant="outline" onClick={zoomOut} className="h-6 w-6 md:h-7 md:w-7 p-0">
+                    <ZoomOut className="h-2.5 w-2.5 md:h-3 md:w-3" />
                   </Button>
-                  <span className="text-xs font-medium w-10 text-center">{Math.round(zoom * 100)}%</span>
-                  <Button size="sm" variant="outline" onClick={zoomIn} className="h-7 w-7 p-0">
-                    <ZoomIn className="h-3 w-3" />
+                  <span className="text-[10px] md:text-xs font-medium w-8 md:w-10 text-center">{Math.round(zoom * 100)}%</span>
+                  <Button size="sm" variant="outline" onClick={zoomIn} className="h-6 w-6 md:h-7 md:w-7 p-0">
+                    <ZoomIn className="h-2.5 w-2.5 md:h-3 md:w-3" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pb-3">
+            <CardContent className="pb-2 md:pb-3 px-3 md:px-6">
               <div 
                 className="bg-gray-50 rounded-lg overflow-hidden cursor-grab active:cursor-grabbing relative" 
-                style={{ height: '250px' }}
+                style={{ height: '200px', minHeight: '150px' }}
                 onMouseDown={handleMapMouseDown}
                 onMouseMove={handleMapMouseMove}
                 onMouseUp={handleMapMouseUp}
@@ -655,16 +649,16 @@ export function UserPage() {
             </CardContent>
           </Card>
 
-          {/* Device Controls - ตามห้องปัจจุบัน */}
+          {/* Device Controls - Mobile Optimized */}
           <Card className="shadow-lg">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Power className="h-4 w-4 text-[#0056B3]" />
+            <CardHeader className="pb-1 md:pb-2 px-3 md:px-6">
+              <CardTitle className="flex items-center gap-1.5 md:gap-2 text-sm md:text-base">
+                <Power className="h-3 w-3 md:h-4 md:w-4 text-[#0056B3]" />
                 อุปกรณ์ - {currentRoom} ({currentRoomDevices.length})
               </CardTitle>
             </CardHeader>
-            <CardContent className="pb-3">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2" key={`devices-${currentRoom}-${devices.length}`}>
+            <CardContent className="pb-2 md:pb-3 px-3 md:px-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 md:gap-2" key={`devices-${currentRoom}-${devices.length}`}>
                 {currentRoomDevices.map((device) => {
                   const isOn = device.power === 'on';
                   const hasValue = device.value !== undefined;
@@ -676,19 +670,19 @@ export function UserPage() {
                         isOn ? 'border-[#00945E] bg-green-50' : 'border-gray-200'
                       }`}
                     >
-                      <CardContent className="p-2">
-                        <div className="flex flex-col items-center gap-1.5">
+                      <CardContent className="p-1.5 md:p-2">
+                        <div className="flex flex-col items-center gap-1 md:gap-1.5">
                           <div
-                            className={`p-2 rounded-full ${
+                            className={`p-1.5 md:p-2 rounded-full ${
                               isOn ? 'bg-[#00945E] text-white' : 'bg-gray-200 text-gray-500'
                             }`}
                           >
                             {getDeviceIcon(device.applianceKind)}
                           </div>
                           <div className="text-center w-full">
-                            <div className="font-medium text-xs truncate">{device.name}</div>
+                            <div className="font-medium text-[10px] md:text-xs truncate">{device.name}</div>
                             {hasValue && isOn && (
-                              <div className="text-xs font-medium">
+                              <div className="text-[10px] md:text-xs font-medium">
                                 {device.applianceKind === 'ac' ? `${device.value}°C` : `${device.value}%`}
                               </div>
                             )}
@@ -696,7 +690,7 @@ export function UserPage() {
                           <Button
                             size="sm"
                             variant={isOn ? 'default' : 'outline'}
-                            className={`w-full h-7 text-xs ${isOn ? 'bg-[#00945E] hover:bg-[#007a4d]' : ''}`}
+                            className={`w-full h-6 md:h-7 text-[10px] md:text-xs ${isOn ? 'bg-[#00945E] hover:bg-[#007a4d]' : ''}`}
                             onClick={() => handleDeviceToggle(device.id)}
                           >
                             {isOn ? 'ปิด' : 'เปิด'}
@@ -717,40 +711,23 @@ export function UserPage() {
           </Card>
         </div>
 
-        {/* Right Column: AI Chat & Timeline */}
-        <div className="space-y-4">
-          {/* Demo Sequence Control - แสดงเมื่อมี sequence */}
-          {demoState.isRunning && (
-            <Card className="shadow-lg border-2 border-[#0056B3] bg-gradient-to-r from-blue-50 to-purple-50">
-              <CardContent className="p-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-                  <span className="font-bold text-[#0056B3]">
-                    🎬 {demoState.currentStep?.sceneName}
-                  </span>
-                  <Badge variant="outline" className="ml-auto">
-                    Step {(demoState.currentStepIndex || 0) + 1} / 11
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-          
+        {/* Right Column: AI Chat & Timeline - Mobile Optimized */}
+        <div className="space-y-2 md:space-y-4">
           <Tabs defaultValue="chat" className="h-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="chat">💬 Chat</TabsTrigger>
-              <TabsTrigger value="timeline">📅 Timeline</TabsTrigger>
-              <TabsTrigger value="profile">👤 Profile</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-8 md:h-10">
+              <TabsTrigger value="chat" className="text-xs md:text-sm py-1 md:py-2">💬 Chat</TabsTrigger>
+              <TabsTrigger value="timeline" className="text-xs md:text-sm py-1 md:py-2">📅 Timeline</TabsTrigger>
+              <TabsTrigger value="profile" className="text-xs md:text-sm py-1 md:py-2">👤 Profile</TabsTrigger>
             </TabsList>
 
-            {/* AI Chat Tab */}
-            <TabsContent value="chat" className="mt-2">
+            {/* AI Chat Tab - Mobile Optimized */}
+            <TabsContent value="chat" className="mt-1 md:mt-2">
               <Card className="shadow-lg">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">🤖 AI Assistant</CardTitle>
+                <CardHeader className="pb-1 md:pb-2 px-3 md:px-6">
+                  <CardTitle className="text-xs md:text-sm">🤖 AI Assistant</CardTitle>
                 </CardHeader>
-                <CardContent className="pb-3">
-                  <ScrollArea className="h-[300px] md:h-[350px] pr-4 mb-3">
+                <CardContent className="pb-2 md:pb-3 px-3 md:px-6">
+                  <ScrollArea className="h-[250px] md:h-[350px] pr-2 md:pr-4 mb-2 md:mb-3">
                     {chatMessages.map((msg, index) => {
                       const isUser = msg.sender === 'user';
                       const cardType = msg.cardType || 'normal';

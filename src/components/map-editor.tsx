@@ -1130,60 +1130,6 @@ export function MapEditor() {
                       </>
                     )}
                     
-                    {/* Corridors */}
-                    {showCorridors && currentFloorCorridors.map((corridor) => (
-                      <g key={corridor.id}>
-                        <polyline
-                          points={corridor.points.map(p => `${p.x},${p.y}`).join(' ')}
-                          stroke={corridor.color || '#e5e7eb'}
-                          strokeWidth={corridor.width}
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="cursor-pointer hover:opacity-80"
-                          onClick={() => setSelectedCorridor(corridor)}
-                        />
-                        {corridor.points.map((point, idx) => (
-                          <circle
-                            key={idx}
-                            cx={point.x}
-                            cy={point.y}
-                            r="6"
-                            fill={selectedCorridor?.id === corridor.id ? '#f59e0b' : '#9ca3af'}
-                            className="cursor-pointer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedCorridor(corridor);
-                            }}
-                          />
-                        ))}
-                      </g>
-                    ))}
-                    
-                    {/* Temporary corridor being drawn */}
-                    {corridorMode === 'drawing' && corridorPoints.length > 0 && (
-                      <>
-                        <polyline
-                          points={corridorPoints.map(p => `${p.x},${p.y}`).join(' ')}
-                          stroke="#f59e0b"
-                          strokeWidth="24"
-                          fill="none"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeDasharray="10,5"
-                          opacity="0.6"
-                        />
-                        {corridorPoints.map((point, idx) => (
-                          <circle
-                            key={idx}
-                            cx={point.x}
-                            cy={point.y}
-                            r="8"
-                            fill="#f59e0b"
-                          />
-                        ))}
-                      </>
-                    )}
                     {showRooms && currentFloorRooms.map((room) => {
                     const status = getRoomStatus(room);
                       const roomAppliances = devices.filter((d) => d.type === 'appliance' && d.room === room.name);
@@ -1338,6 +1284,61 @@ export function MapEditor() {
                       </g>
                     );
                   })}
+                    
+                    {/* Corridors - rendered on top of rooms and grid */}
+                    {showCorridors && currentFloorCorridors.map((corridor) => (
+                      <g key={corridor.id}>
+                        <polyline
+                          points={corridor.points.map(p => `${p.x},${p.y}`).join(' ')}
+                          stroke={corridor.color || '#e5e7eb'}
+                          strokeWidth={corridor.width}
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="cursor-pointer hover:opacity-80"
+                          onClick={() => setSelectedCorridor(corridor)}
+                        />
+                        {corridor.points.map((point, idx) => (
+                          <circle
+                            key={idx}
+                            cx={point.x}
+                            cy={point.y}
+                            r="6"
+                            fill={selectedCorridor?.id === corridor.id ? '#f59e0b' : '#9ca3af'}
+                            className="cursor-pointer"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCorridor(corridor);
+                            }}
+                          />
+                        ))}
+                      </g>
+                    ))}
+                    
+                    {/* Temporary corridor being drawn - always on top */}
+                    {corridorMode === 'drawing' && corridorPoints.length > 0 && (
+                      <>
+                        <polyline
+                          points={corridorPoints.map(p => `${p.x},${p.y}`).join(' ')}
+                          stroke="#f59e0b"
+                          strokeWidth="24"
+                          fill="none"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeDasharray="10,5"
+                          opacity="0.6"
+                        />
+                        {corridorPoints.map((point, idx) => (
+                          <circle
+                            key={idx}
+                            cx={point.x}
+                            cy={point.y}
+                            r="8"
+                            fill="#f59e0b"
+                          />
+                        ))}
+                      </>
+                    )}
                   </g>
                 </svg>
               </div>

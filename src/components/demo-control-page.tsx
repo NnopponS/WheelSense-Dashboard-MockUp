@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -10,11 +10,35 @@ import { DEFAULT_DEMO_SEQUENCE, DemoSequence, DemoSequenceStep } from '../lib/de
 import { MapCanvas } from './map-editor/MapCanvas';
 import { SequenceEditor } from './demo-control/SequenceEditor';
 
+const SEQUENCE_STORAGE_KEY = 'wheelsense-demo-sequence';
+
 export function DemoControlPage() {
   const { devices, rooms, corridors, floors, buildings, updateDevice, addEventLog, demoState, setDemoState } = useStore();
-  const [sequence, setSequence] = useState<DemoSequence>(DEFAULT_DEMO_SEQUENCE);
+  
+  // Load sequence from localStorage or use default
+  const [sequence, setSequence] = useState<DemoSequence>(() => {
+    try {
+      const saved = localStorage.getItem(SEQUENCE_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load sequence from storage:', e);
+    }
+    return DEFAULT_DEMO_SEQUENCE;
+  });
+  
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
   const [showSequenceEditor, setShowSequenceEditor] = useState<boolean>(false);
+  
+  // Persist sequence to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(SEQUENCE_STORAGE_KEY, JSON.stringify(sequence));
+    } catch (e) {
+      console.error('Failed to save sequence to storage:', e);
+    }
+  }, [sequence]);
 
   const selectedFloor = 'S-F1'; // Smart Home floor
   const selectedBuilding = 'B2';
@@ -73,24 +97,26 @@ export function DemoControlPage() {
 
 
   return (
-    <div className="h-full flex flex-col gap-4 p-4 bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Header */}
+    <div className="h-full flex flex-col gap-2 md:gap-4 p-2 md:p-4 bg-gradient-to-br from-gray-50 to-blue-50">
+      {/* Header - Mobile Optimized */}
       <Card className="shadow-lg border-none bg-gradient-to-r from-[#0056B3] to-[#00945E]">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl text-white flex items-center gap-3">
-                🎬 Demo Control Center
+        <CardHeader className="pb-2 md:pb-3 px-3 md:px-6">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="min-w-0">
+              <CardTitle className="text-base md:text-2xl text-white flex items-center gap-2 md:gap-3">
+                🎬 Demo Control
               </CardTitle>
-              <p className="text-white/80 mt-1">{sequence.description}</p>
+              <p className="text-white/80 mt-0.5 md:mt-1 text-xs md:text-sm hidden sm:block truncate">{sequence.description}</p>
             </div>
             <Button 
               variant="secondary" 
               size="sm"
               onClick={() => setShowSequenceEditor(true)}
+              className="h-7 md:h-9 text-xs md:text-sm shrink-0"
             >
-              <Edit className="mr-2 h-4 w-4" />
-              แก้ไข Sequence
+              <Edit className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">แก้ไข Sequence</span>
+              <span className="sm:hidden">แก้ไข</span>
             </Button>
           </div>
         </CardHeader>
@@ -107,17 +133,17 @@ export function DemoControlPage() {
         }}
       />
 
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4 overflow-hidden">
-        {/* Left: Map & Wheelchair */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-2 md:gap-4 overflow-hidden">
+        {/* Left: Map & Wheelchair - Mobile Optimized */}
         <Card className="lg:col-span-2 shadow-lg">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <MapPin className="h-5 w-5 text-[#0056B3]" />
+          <CardHeader className="pb-2 md:pb-3 px-3 md:px-6">
+            <CardTitle className="flex items-center gap-1.5 md:gap-2 text-sm md:text-lg">
+              <MapPin className="h-4 w-4 md:h-5 md:w-5 text-[#0056B3]" />
               Smart Home Map
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="bg-gray-50 rounded-lg overflow-hidden" style={{ height: '500px' }}>
+          <CardContent className="px-3 md:px-6">
+            <div className="bg-gray-50 rounded-lg overflow-hidden" style={{ height: '300px', minHeight: '250px' }}>
               <svg
                 width="100%"
                 height="100%"
@@ -236,27 +262,27 @@ export function DemoControlPage() {
           </CardContent>
         </Card>
 
-        {/* Right: Timeline & Info */}
-        <div className="flex flex-col gap-4">
-          {/* Current Step Info */}
+        {/* Right: Timeline & Info - Mobile Optimized */}
+        <div className="flex flex-col gap-2 md:gap-4">
+          {/* Current Step Info - Compact on Mobile */}
           {currentStep && (
             <Card className="shadow-lg border-2 border-[#0056B3]">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="text-4xl">{currentStep.aiMessages[0]?.icon || '🏠'}</div>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant="default" className="bg-[#0056B3]">
-                        <Clock className="mr-1 h-3 w-3" />
+              <CardContent className="p-2 md:p-4">
+                <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-3">
+                  <div className="text-2xl md:text-4xl shrink-0">{currentStep.aiMessages[0]?.icon || '🏠'}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1 flex-wrap">
+                      <Badge variant="default" className="bg-[#0056B3] text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
+                        <Clock className="mr-0.5 md:mr-1 h-2 w-2 md:h-3 md:w-3" />
                         {currentStep.time}
                       </Badge>
-                      <h3 className="font-bold">{currentStep.sceneName}</h3>
+                      <h3 className="font-bold text-xs md:text-base truncate">{currentStep.sceneName}</h3>
                     </div>
-                    <p className="text-xs text-gray-600">{currentStep.description.substring(0, 80)}...</p>
+                    <p className="text-[10px] md:text-xs text-gray-600 line-clamp-2 hidden sm:block">{currentStep.description.substring(0, 60)}...</p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm mb-3">
-                  <MapPin className="h-4 w-4 text-[#00945E]" />
+                <div className="flex items-center gap-1 md:gap-2 text-xs md:text-sm mb-2 md:mb-3">
+                  <MapPin className="h-3 w-3 md:h-4 md:w-4 text-[#00945E]" />
                   <span className="font-medium">{currentStep.room}</span>
                 </div>
                 {demoState.isRunning && (
@@ -264,9 +290,9 @@ export function DemoControlPage() {
                     size="sm"
                     variant="destructive"
                     onClick={handleStop}
-                    className="w-full"
+                    className="w-full h-7 md:h-9 text-xs md:text-sm"
                   >
-                    <Square className="mr-2 h-4 w-4" />
+                    <Square className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
                     หยุด Demo
                   </Button>
                 )}
@@ -274,33 +300,33 @@ export function DemoControlPage() {
             </Card>
           )}
 
-          {/* Sequence Steps List - คลิกเพื่อ Run */}
+          {/* Sequence Steps List - Mobile Optimized */}
           <Card className="shadow-lg flex-1">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">📅 Timeline - คลิกเพื่อ Run ทันที</CardTitle>
+            <CardHeader className="pb-2 md:pb-3 px-3 md:px-6">
+              <CardTitle className="text-xs md:text-base">📅 Timeline - คลิกเพื่อ Run</CardTitle>
             </CardHeader>
-            <CardContent>
-              <ScrollArea className="h-[600px]">
+            <CardContent className="px-3 md:px-6">
+              <ScrollArea className="h-[400px] md:h-[600px]">
                 <div className="space-y-2">
                   {sequence.steps.map((step, index) => (
                     <Button
                       key={step.id}
                       variant={index === currentStepIndex ? 'default' : 'outline'}
-                      className={`w-full justify-start text-left h-auto py-3 ${
+                      className={`w-full justify-start text-left h-auto py-2 md:py-3 ${
                         index === currentStepIndex ? 'bg-[#0056B3] hover:bg-[#004494]' : ''
                       }`}
                       onClick={() => handleStepClick(index)}
                     >
-                      <div className="flex items-center gap-2 w-full">
-                        <div className="text-2xl">{step.aiMessages[0]?.icon || '📍'}</div>
+                      <div className="flex items-center gap-1.5 md:gap-2 w-full">
+                        <div className="text-lg md:text-2xl shrink-0">{step.aiMessages[0]?.icon || '📍'}</div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="secondary" className="shrink-0 text-xs">
+                          <div className="flex items-center gap-1 md:gap-2 mb-0.5 md:mb-1 flex-wrap">
+                            <Badge variant="secondary" className="shrink-0 text-[10px] md:text-xs px-1.5 md:px-2 py-0.5">
                               {step.time}
                             </Badge>
-                            <span className="font-medium text-sm">{step.sceneName}</span>
+                            <span className="font-medium text-xs md:text-sm truncate">{step.sceneName}</span>
                           </div>
-                          <div className="text-xs text-muted-foreground">
+                          <div className="text-[10px] md:text-xs text-muted-foreground">
                             📍 {step.room}
                           </div>
                         </div>

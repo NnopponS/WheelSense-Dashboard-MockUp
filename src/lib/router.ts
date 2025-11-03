@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 
 const ROUTE_KEY = 'wheelsense-last-route-path';
 
+// Note: Navigation system in monitoring-dashboard also uses this localStorage mechanism
+// for persisting navigation state (NAV_STATE_KEY = 'wheelsense-navigation-state')
+
 export type PathRoute = '/' | '/login';
 
 export function getCurrentPath(): PathRoute {

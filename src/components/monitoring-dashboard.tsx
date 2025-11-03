@@ -49,11 +49,50 @@ export function MonitoringDashboard() {
   const [isPanning, setIsPanning] = useState<boolean>(false);
   const panStartRef = useRef<{ x: number; y: number } | null>(null);
 
-  // Navigation state
-  const [showNavigation, setShowNavigation] = useState(false);
-  const [navFrom, setNavFrom] = useState<string>('');
-  const [navTo, setNavTo] = useState<string>('');
+  // Navigation state - persisted via PathRoute mechanism
+  const NAV_STATE_KEY = 'wheelsense-navigation-state';
+  
+  const [showNavigation, setShowNavigation] = useState(() => {
+    try {
+      const saved = localStorage.getItem(NAV_STATE_KEY);
+      return saved ? JSON.parse(saved).showNavigation : false;
+    } catch {
+      return false;
+    }
+  });
+  
+  const [navFrom, setNavFrom] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(NAV_STATE_KEY);
+      return saved ? JSON.parse(saved).navFrom || '' : '';
+    } catch {
+      return '';
+    }
+  });
+  
+  const [navTo, setNavTo] = useState<string>(() => {
+    try {
+      const saved = localStorage.getItem(NAV_STATE_KEY);
+      return saved ? JSON.parse(saved).navTo || '' : '';
+    } catch {
+      return '';
+    }
+  });
+  
   const [navigationPath, setNavigationPath] = useState<{x: number, y: number}[]>([]);
+  
+  // Persist navigation state to localStorage (connected with PathRoute system)
+  useEffect(() => {
+    try {
+      localStorage.setItem(NAV_STATE_KEY, JSON.stringify({
+        showNavigation,
+        navFrom,
+        navTo
+      }));
+    } catch (e) {
+      console.error('Failed to save navigation state:', e);
+    }
+  }, [showNavigation, navFrom, navTo]);
 
   // Smart Home Controls filter
   const [smartHomeFilterBuilding, setSmartHomeFilterBuilding] = useState<string>('');
@@ -464,7 +503,7 @@ export function MonitoringDashboard() {
 
   return (
     <div className="h-full bg-gradient-to-br from-gray-50 to-blue-50/30 overflow-auto">
-      <div className="container mx-auto p-4 md:p-6 space-y-6">
+      <div className="container mx-auto p-2 md:p-4 lg:p-6 space-y-3 md:space-y-6">
         {/* Hero Stats Section */}
         <StatisticsCards
           activeWheelchairs={activeWheelchairs}
@@ -487,107 +526,114 @@ export function MonitoringDashboard() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Floor Map */}
           <Card className="lg:col-span-2 border-none shadow-lg">
-            <CardHeader className="pb-4">
-              <div className="flex flex-col space-y-4">
+            <CardHeader className="pb-2 md:pb-4">
+              <div className="flex flex-col space-y-2 md:space-y-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <CardTitle className="flex items-center gap-2">
-                      <MapPin className="h-5 w-5 text-[#0056B3]" />
+                    <CardTitle className="flex items-center gap-1.5 md:gap-2 text-sm md:text-lg">
+                      <MapPin className="h-4 w-4 md:h-5 md:w-5 text-[#0056B3]" />
                       <span>Real-time Floor Map</span>
                     </CardTitle>
-                    <CardDescription>Interactive building navigation and monitoring</CardDescription>
+                    <CardDescription className="text-xs md:text-sm hidden sm:block">Interactive building navigation and monitoring</CardDescription>
                   </div>
                 </div>
                 
-                {/* Controls Bar */}
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium">Building:</label>
-                    <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
-                      <SelectTrigger className="w-40">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sortedBuildings.map((b) => (
-                          <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                {/* Controls Bar - Mobile Optimized */}
+                <div className="space-y-2">
+                  {/* Building & Floor Selection - Full Width on Mobile */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-1.5 flex-1 min-w-[140px]">
+                      <label className="text-xs md:text-sm font-medium shrink-0">Building:</label>
+                      <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
+                        <SelectTrigger className="h-8 md:h-10 text-xs md:text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sortedBuildings.map((b) => (
+                            <SelectItem key={b.id} value={b.id}>{b.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="flex items-center gap-1.5 flex-1 min-w-[120px]">
+                      <label className="text-xs md:text-sm font-medium shrink-0">Floor:</label>
+                      <Select value={selectedFloor} onValueChange={setSelectedFloor}>
+                        <SelectTrigger className="h-8 md:h-10 text-xs md:text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {currentBuildingFloors.map((f) => (
+                            <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm font-medium">Floor:</label>
-                    <Select value={selectedFloor} onValueChange={setSelectedFloor}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {currentBuildingFloors.map((f) => (
-                          <SelectItem key={f.id} value={f.id}>{f.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <Separator orientation="vertical" className="h-10 md:h-12" />
-                  
-                  <div className="flex items-center gap-2 md:gap-3 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 md:px-4 py-2 rounded-lg border-2 border-blue-200 shadow-sm" role="group" aria-label="Map zoom controls">
+                  {/* Action Buttons Row */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Zoom Controls - Compact on Mobile */}
+                    <div className="flex items-center gap-1 md:gap-2 bg-gradient-to-r from-blue-50 to-indigo-50 px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-blue-200" role="group" aria-label="Map zoom controls">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="h-7 w-7 md:h-9 md:w-9 p-0 hover:bg-blue-100 bg-white" 
+                        onClick={() => setZoom((z) => Math.max(ZOOM_CONFIG.min, Number((z - ZOOM_CONFIG.step).toFixed(2))))}
+                        aria-label="Zoom out"
+                        disabled={zoom <= ZOOM_CONFIG.min}
+                      >
+                        <ZoomOut className="h-3 w-3 md:h-4 md:w-4" />
+                      </Button>
+                      <span className="text-xs md:text-sm font-bold w-10 md:w-14 text-center text-[#0056B3]" aria-live="polite">
+                        {Math.round(zoom * 100)}%
+                      </span>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="h-7 w-7 md:h-9 md:w-9 p-0 hover:bg-blue-100 bg-white" 
+                        onClick={() => setZoom((z) => Math.min(ZOOM_CONFIG.max, Number((z + ZOOM_CONFIG.step).toFixed(2))))}
+                        aria-label="Zoom in"
+                        disabled={zoom >= ZOOM_CONFIG.max}
+                      >
+                        <ZoomIn className="h-3 w-3 md:h-4 md:w-4" />
+                      </Button>
+                    </div>
+                    
                     <Button 
-                      size="default" 
-                      variant="outline" 
-                      className="h-10 md:h-11 w-10 md:w-11 p-0 hover:bg-blue-100 hover:border-blue-400 bg-white" 
-                      onClick={() => setZoom((z) => Math.max(ZOOM_CONFIG.min, Number((z - ZOOM_CONFIG.step).toFixed(2))))}
-                      aria-label="Zoom out"
-                      disabled={zoom <= ZOOM_CONFIG.min}
-                    >
-                      <ZoomOut className="h-5 w-5 md:h-6 md:w-6" />
-                    </Button>
-                    <span className="text-base md:text-lg font-bold w-16 md:w-20 text-center text-[#0056B3]" aria-live="polite" aria-label="Current zoom level">
-                      {Math.round(zoom * 100)}%
-                    </span>
-                    <Button 
-                      size="default" 
-                      variant="outline" 
-                      className="h-10 md:h-11 w-10 md:w-11 p-0 hover:bg-blue-100 hover:border-blue-400 bg-white" 
-                      onClick={() => setZoom((z) => Math.min(ZOOM_CONFIG.max, Number((z + ZOOM_CONFIG.step).toFixed(2))))}
-                      aria-label="Zoom in"
-                      disabled={zoom >= ZOOM_CONFIG.max}
-                    >
-                      <ZoomIn className="h-5 w-5 md:h-6 md:w-6" />
-                    </Button>
-                  </div>
-                  
-                  <Button 
-                    onClick={() => setShowNavigation(!showNavigation)} 
-                    size="sm" 
-                    variant={showNavigation ? 'default' : 'outline'}
-                    className={showNavigation ? 'bg-[#0056B3] hover:bg-[#004494]' : ''}
-                    aria-label="Toggle navigation panel"
-                    aria-expanded={showNavigation}
-                  >
-                    <Navigation className="mr-2 h-4 w-4" />
-                    Navigation
-                  </Button>
-                  
-                  {selectedItem.type && (
-                    <Button 
-                      onClick={() => setShowDetailsDialog(true)} 
+                      onClick={() => setShowNavigation(!showNavigation)} 
                       size="sm" 
-                      className="bg-[#00945E] hover:bg-[#007a4d]"
-                      aria-label={`View details for ${selectedItem.type} ${selectedItem.id}`}
+                      variant={showNavigation ? 'default' : 'outline'}
+                      className={`h-7 md:h-9 text-xs md:text-sm ${showNavigation ? 'bg-[#0056B3] hover:bg-[#004494]' : ''}`}
+                      aria-label="Toggle navigation panel"
+                      aria-expanded={showNavigation}
                     >
-                      <Info className="mr-2 h-4 w-4" />
-                      Details
+                      <Navigation className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+                      <span className="hidden sm:inline">Navigation</span>
+                      <span className="sm:hidden">Nav</span>
                     </Button>
-                  )}
+                    
+                    {selectedItem.type && (
+                      <Button 
+                        onClick={() => setShowDetailsDialog(true)} 
+                        size="sm" 
+                        className="h-7 md:h-9 text-xs md:text-sm bg-[#00945E] hover:bg-[#007a4d]"
+                        aria-label={`View details for ${selectedItem.type} ${selectedItem.id}`}
+                      >
+                        <Info className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" />
+                        <span className="hidden sm:inline">Details</span>
+                        <span className="sm:hidden">Info</span>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="p-4">
-              {/* Navigation Controls */}
+            <CardContent className="p-2 md:p-4">
+              {/* Navigation Controls - Mobile Optimized */}
               {showNavigation && (
-                <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm">
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <div className="mb-3 md:mb-4 p-2 md:p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 shadow-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-2 md:gap-3">
                     <Select value={navFrom} onValueChange={setNavFrom}>
                       <SelectTrigger className="md:col-span-2 bg-white">
                         <SelectValue placeholder="Select starting point..." />
