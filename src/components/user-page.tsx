@@ -151,7 +151,6 @@ export function UserPage() {
     { id: '11', time: '22:00', room: 'Bedroom', duration: 60, activity: 'เข้านอน' },
   ]);
 
-  const [aiAnalysis, setAiAnalysis] = useState('');
   
   // Load user profile when selection changes
   useEffect(() => {
@@ -467,32 +466,32 @@ export function UserPage() {
         <div className="lg:col-span-2 space-y-4">
           {/* Map */}
           <Card className="shadow-lg">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="h-5 w-5 text-[#0056B3]" />
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <MapPin className="h-4 w-4 text-[#0056B3]" />
                   แผนที่บ้าน
                 </CardTitle>
                 <div className="flex items-center gap-2">
-                  <Badge variant="default" className="bg-[#00945E]">
+                  <Badge variant="default" className="bg-[#00945E] text-xs">
                     <MapPin className="mr-1 h-3 w-3" />
                     {currentRoom}
                   </Badge>
                   {/* Zoom Controls */}
-                  <Button size="sm" variant="outline" onClick={zoomOut} className="h-8 w-8 p-0">
+                  <Button size="sm" variant="outline" onClick={zoomOut} className="h-7 w-7 p-0">
                     <ZoomOut className="h-3 w-3" />
                   </Button>
                   <span className="text-xs font-medium w-10 text-center">{Math.round(zoom * 100)}%</span>
-                  <Button size="sm" variant="outline" onClick={zoomIn} className="h-8 w-8 p-0">
+                  <Button size="sm" variant="outline" onClick={zoomIn} className="h-7 w-7 p-0">
                     <ZoomIn className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pb-3">
               <div 
                 className="bg-gray-50 rounded-lg overflow-hidden cursor-grab active:cursor-grabbing relative" 
-                style={{ height: '400px' }}
+                style={{ height: '250px' }}
                 onMouseDown={handleMapMouseDown}
                 onMouseMove={handleMapMouseMove}
                 onMouseUp={handleMapMouseUp}
@@ -658,14 +657,14 @@ export function UserPage() {
 
           {/* Device Controls - ตามห้องปัจจุบัน */}
           <Card className="shadow-lg">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2">
-                <Power className="h-5 w-5 text-[#0056B3]" />
-                ควบคุมอุปกรณ์ - {currentRoom} ({currentRoomDevices.length})
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Power className="h-4 w-4 text-[#0056B3]" />
+                อุปกรณ์ - {currentRoom} ({currentRoomDevices.length})
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3" key={`devices-${currentRoom}-${devices.length}`}>
+            <CardContent className="pb-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2" key={`devices-${currentRoom}-${devices.length}`}>
                 {currentRoomDevices.map((device) => {
                   const isOn = device.power === 'on';
                   const hasValue = device.value !== undefined;
@@ -673,24 +672,23 @@ export function UserPage() {
                   return (
                     <Card
                       key={device.id}
-                      className={`border-2 transition-all ${
+                      className={`border transition-all ${
                         isOn ? 'border-[#00945E] bg-green-50' : 'border-gray-200'
                       }`}
                     >
-                      <CardContent className="p-3">
-                        <div className="flex flex-col items-center gap-2">
+                      <CardContent className="p-2">
+                        <div className="flex flex-col items-center gap-1.5">
                           <div
-                            className={`p-3 rounded-full ${
+                            className={`p-2 rounded-full ${
                               isOn ? 'bg-[#00945E] text-white' : 'bg-gray-200 text-gray-500'
                             }`}
                           >
                             {getDeviceIcon(device.applianceKind)}
                           </div>
                           <div className="text-center w-full">
-                            <div className="font-medium text-sm">{device.name}</div>
-                            <div className="text-xs text-muted-foreground">{device.applianceKind}</div>
+                            <div className="font-medium text-xs truncate">{device.name}</div>
                             {hasValue && isOn && (
-                              <div className="text-xs font-medium mt-1">
+                              <div className="text-xs font-medium">
                                 {device.applianceKind === 'ac' ? `${device.value}°C` : `${device.value}%`}
                               </div>
                             )}
@@ -698,7 +696,7 @@ export function UserPage() {
                           <Button
                             size="sm"
                             variant={isOn ? 'default' : 'outline'}
-                            className={`w-full ${isOn ? 'bg-[#00945E] hover:bg-[#007a4d]' : ''}`}
+                            className={`w-full h-7 text-xs ${isOn ? 'bg-[#00945E] hover:bg-[#007a4d]' : ''}`}
                             onClick={() => handleDeviceToggle(device.id)}
                           >
                             {isOn ? 'ปิด' : 'เปิด'}
@@ -746,13 +744,13 @@ export function UserPage() {
             </TabsList>
 
             {/* AI Chat Tab */}
-            <TabsContent value="chat" className="mt-4">
+            <TabsContent value="chat" className="mt-2">
               <Card className="shadow-lg">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-2">
                   <CardTitle className="text-sm">🤖 AI Assistant</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[400px] pr-4 mb-4">
+                <CardContent className="pb-3">
+                  <ScrollArea className="h-[300px] md:h-[350px] pr-4 mb-3">
                     {chatMessages.map((msg, index) => {
                       const isUser = msg.sender === 'user';
                       const cardType = msg.cardType || 'normal';
@@ -822,39 +820,39 @@ export function UserPage() {
             </TabsContent>
 
             {/* Timeline Tab */}
-            <TabsContent value="timeline" className="mt-4">
+            <TabsContent value="timeline" className="mt-2">
               <Card className="shadow-lg">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center justify-between">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
                     <CardTitle className="text-sm flex items-center gap-2">
                       <Activity className="h-4 w-4" />
-                      Timeline วันนี้
+                      Timeline
                     </CardTitle>
-                    <Button size="sm" onClick={handleAIAnalysis} className="bg-[#00945E]">
-                      <Brain className="mr-2 h-4 w-4" />
-                      AI Analysis
+                    <Button size="sm" onClick={handleAIAnalysis} className="bg-[#00945E] h-8">
+                      <Brain className="mr-1 h-3 w-3" />
+                      <span className="text-xs">วิเคราะห์</span>
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[400px] pr-4">
-                    <div className="space-y-3">
+                <CardContent className="pb-3">
+                  <ScrollArea className="h-[300px] md:h-[350px] pr-4">
+                    <div className="space-y-2">
                       {timeline.map((entry) => (
                         <div
                           key={entry.id}
-                          className="flex items-start gap-3 p-3 rounded-lg border-2 border-gray-100 hover:border-blue-200 transition-colors"
+                          className="flex items-start gap-2 p-2 rounded-lg border border-gray-100 hover:border-blue-200 transition-colors bg-white"
                         >
-                          <div className="flex flex-col items-center gap-1 min-w-[60px]">
-                            <Badge variant="outline" className="text-xs">
+                          <div className="flex flex-col items-center gap-0.5 min-w-[50px]">
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 h-5">
                               {entry.time}
                             </Badge>
-                            <span className="text-xs text-gray-500">{entry.duration}m</span>
+                            <span className="text-[10px] text-gray-500">{entry.duration}m</span>
                           </div>
-                          <div className="flex-1">
-                            <div className="font-medium text-sm">{entry.activity}</div>
-                            <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                              <MapPin className="h-3 w-3" />
-                              {entry.room}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-xs truncate">{entry.activity}</div>
+                            <div className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
+                              <MapPin className="h-2.5 w-2.5 shrink-0" />
+                              <span className="truncate">{entry.room}</span>
                             </div>
                           </div>
                         </div>
@@ -866,16 +864,16 @@ export function UserPage() {
             </TabsContent>
 
             {/* Profile Tab */}
-            <TabsContent value="profile" className="mt-4">
+            <TabsContent value="profile" className="mt-2">
               <Card className="shadow-lg">
-                <CardHeader className="pb-3">
+                <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <UserIcon className="h-4 w-4" />
                     ข้อมูลผู้ใช้
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[500px] pr-4">
+                <CardContent className="pb-3">
+                  <ScrollArea className="h-[300px] md:h-[350px] pr-4">
                     <div className="space-y-4">
                       {/* Doctor's Notes */}
                       <div>
@@ -939,63 +937,114 @@ export function UserPage() {
         </div>
       </div>
 
-      {/* AI Analysis Dialog - Compact Popup */}
+      {/* AI Analysis Dialog - Compact & Mobile-Friendly */}
       <Dialog open={showAIAnalysisDialog} onOpenChange={setShowAIAnalysisDialog}>
-        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-[#0056B3]" />
-              📊 AI Analysis
+        <DialogContent className="max-w-md max-h-[85vh] overflow-hidden p-4">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Brain className="h-4 w-4 text-[#0056B3]" />
+              วิเคราะห์กิจกรรม
             </DialogTitle>
-            <DialogDescription>
-              วิเคราะห์กิจกรรมและให้คำแนะนำเพื่อสุขภาพที่ดี
-            </DialogDescription>
           </DialogHeader>
+          
+          {/* Compact Summary Cards */}
           <div className="space-y-3">
-            {/* Header Card - Compact */}
-            <Card className="border-none bg-gradient-to-r from-[#0056B3] to-[#00945E]">
-              <CardContent className="p-4 text-white">
-                <div className="flex items-center gap-3">
-                  <div className="text-4xl">🤖</div>
-                  <div>
-                    <h3 className="font-bold">รายงานประจำวัน</h3>
-                    <p className="text-white/80 text-sm">{userProfile.name}</p>
+            <div className="grid grid-cols-3 gap-2">
+              {(() => {
+                const totalTime = timeline.reduce((acc, entry) => acc + entry.duration, 0);
+                const activeTime = timeline.filter((e) => !e.activity.includes('นอน')).reduce((acc, entry) => acc + entry.duration, 0);
+                const restTime = totalTime - activeTime;
+                
+                return (
+                  <>
+                    <Card className="border-l-4 border-l-blue-500">
+                      <CardContent className="p-2">
+                        <div className="text-[10px] text-gray-500 mb-1">⏱️ รวม</div>
+                        <div className="text-lg font-bold text-blue-600">{(totalTime / 60).toFixed(1)}</div>
+                        <div className="text-[9px] text-gray-500">ชม.</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="border-l-4 border-l-green-500">
+                      <CardContent className="p-2">
+                        <div className="text-[10px] text-gray-500 mb-1">⚡ กิจกรรม</div>
+                        <div className="text-lg font-bold text-green-600">{activeTime}</div>
+                        <div className="text-[9px] text-gray-500">นาที</div>
+                      </CardContent>
+                    </Card>
+                    <Card className="border-l-4 border-l-orange-500">
+                      <CardContent className="p-2">
+                        <div className="text-[10px] text-gray-500 mb-1">😴 พัก</div>
+                        <div className="text-lg font-bold text-orange-600">{restTime}</div>
+                        <div className="text-[9px] text-gray-500">นาที</div>
+                      </CardContent>
+                    </Card>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Timeline Items - Compact Version */}
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm">📅 กิจกรรมวันนี้</CardTitle>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <ScrollArea className="h-[300px]">
+                  <div className="space-y-1.5">
+                    {timeline.map((entry) => (
+                      <div
+                        key={entry.id}
+                        className="flex items-center gap-2 p-2 rounded bg-gray-50 text-xs"
+                      >
+                        <Badge variant="outline" className="text-[10px] px-1 h-5 shrink-0">
+                          {entry.time}
+                        </Badge>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{entry.activity}</div>
+                          <div className="text-[10px] text-gray-500 flex items-center gap-1">
+                            <MapPin className="h-2.5 w-2.5 shrink-0" />
+                            {entry.room} • {entry.duration}m
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                </ScrollArea>
               </CardContent>
             </Card>
 
-            {/* Analysis Content - Compact */}
-            <ScrollArea className="h-[500px]">
-              <div className="p-2">
-                <div 
-                  className="text-sm leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: aiAnalysis }}
-                />
-              </div>
-            </ScrollArea>
+            {/* Recommendations */}
+            {(() => {
+              const activeTime = timeline.filter((e) => !e.activity.includes('นอน')).reduce((acc, entry) => acc + entry.duration, 0);
+              const hasExercise = timeline.find((e) => e.activity.includes('กายภาพบำบัด'));
+              
+              return (
+                <Card className="border-l-4 border-l-purple-500 bg-purple-50">
+                  <CardContent className="p-3">
+                    <div className="text-xs font-semibold mb-2 flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      คำแนะนำ
+                    </div>
+                    <ul className="text-xs space-y-1 text-gray-700">
+                      {activeTime >= 300 && <li>🎉 ยอดเยี่ยม! คุณมีกิจกรรมสูงมาก</li>}
+                      {activeTime < 180 && <li>💪 พยายามเพิ่มกิจกรรมให้มากขึ้น</li>}
+                      {hasExercise && <li>✅ ดีมาก! ทำกายภาพบำบัดสม่ำเสมอ</li>}
+                      {!hasExercise && <li>🏃 ควรออกกำลังกายอย่างน้อย 30 นาที</li>}
+                      <li>💧 อย่าลืมดื่มน้ำวันละ 2 ลิตร</li>
+                    </ul>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
-            {/* Action Buttons - Compact */}
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={() => {
-                  navigator.clipboard.writeText(aiAnalysis);
-                  toast.success('คัดลอกแล้ว');
-                }}
-              >
-                📋 คัดลอก
-              </Button>
-              <Button
-                size="sm"
-                className="flex-1 bg-[#0056B3]"
-                onClick={() => setShowAIAnalysisDialog(false)}
-              >
-                ปิด
-              </Button>
-            </div>
+            {/* Close Button */}
+            <Button
+              size="sm"
+              className="w-full bg-[#0056B3]"
+              onClick={() => setShowAIAnalysisDialog(false)}
+            >
+              ปิด
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
