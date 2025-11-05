@@ -1210,30 +1210,30 @@ export function UserPage() {
         </div>
       </div>
 
-      {/* AI Analysis Dialog - Scrollable PT Report */}
+      {/* AI Analysis Dialog - Compact & Scrollable */}
       <Dialog open={showAIAnalysisDialog} onOpenChange={setShowAIAnalysisDialog}>
-        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
-          <DialogHeader className="px-4 md:px-6 pt-4 pb-3 border-b shrink-0">
-            <DialogTitle className="flex items-center gap-2 text-lg md:text-xl">
-              <Brain className="h-5 w-5 text-[#0056B3]" />
+        <DialogContent className="max-w-2xl h-[80vh] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-3 md:px-4 pt-3 pb-2 border-b shrink-0 bg-gradient-to-r from-[#0056B3] to-[#00945E]">
+            <DialogTitle className="flex items-center gap-2 text-base md:text-lg text-white">
+              <Brain className="h-4 w-4 md:h-5 md:w-5" />
               รายงานการประเมินกายภาพบำบัด
             </DialogTitle>
           </DialogHeader>
           
-          {/* Scrollable Content Area */}
-          <ScrollArea className="flex-1 px-4 md:px-6">
+          {/* Scrollable Content Area with visible scrollbar */}
+          <div className="flex-1 overflow-y-auto px-3 md:px-4 py-3">
             <div 
-              className="prose prose-sm max-w-none py-4"
+              className="prose prose-sm max-w-none"
               dangerouslySetInnerHTML={{ __html: aiAnalysis }}
             />
-          </ScrollArea>
+          </div>
 
           {/* Action Buttons - Fixed at Bottom */}
-          <div className="px-4 md:px-6 py-3 border-t flex gap-2 shrink-0 bg-white">
+          <div className="px-3 md:px-4 py-2 border-t flex gap-2 shrink-0 bg-white shadow-lg">
             <Button
               size="sm"
               variant="outline"
-              className="flex-1"
+              className="flex-1 h-8 text-xs"
               onClick={() => {
                 // Export report
                 const blob = new Blob([aiAnalysis], { type: 'text/html' });
@@ -1244,11 +1244,11 @@ export function UserPage() {
                 a.click();
               }}
             >
-              📥 ดาวน์โหลดรายงาน
+              📥 ดาวน์โหลด
             </Button>
             <Button
               size="sm"
-              className="flex-1 bg-[#0056B3]"
+              className="flex-1 h-8 text-xs bg-[#0056B3]"
               onClick={() => setShowAIAnalysisDialog(false)}
             >
               ปิด
