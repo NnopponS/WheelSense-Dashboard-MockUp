@@ -21,30 +21,30 @@ export const DEFAULT_FLOORS: Floor[] = [
 ];
 
 export const DEFAULT_ROOMS: Room[] = [
-  // Smart Home - Updated from localStorage
-  { id: 's-garage1', name: 'Garage 1', x: 140, y: 60, width: 80, height: 500, color: '#e8e8ff', floorId: 'S-F1' },
-  { id: 's-frontdoor', name: 'Front Door', x: 220, y: 60, width: 100, height: 300, color: '#ffe8e8', floorId: 'S-F1' },
-  { id: 's-working', name: 'Working Room', x: 320, y: 60, width: 300, height: 120, color: '#e8ffe8', floorId: 'S-F1' },
-  { id: 's-bedroom', name: 'Bedroom', x: 620, y: 60, width: 240, height: 300, color: '#ffe8f4', floorId: 'S-F1' },
-  { id: 's-living', name: 'Living Room', x: 320, y: 180, width: 300, height: 180, color: '#e8f4ff', floorId: 'S-F1' },
-  { id: 's-extdoor', name: 'Exterior Door', x: 80, y: 360, width: 60, height: 200, color: '#fff4e8', floorId: 'S-F1' },
-  { id: 's-garage2', name: 'Garage 2', x: 220, y: 360, width: 300, height: 200, color: '#f4e8ff', floorId: 'S-F1' },
-  { id: 's-catsroom', name: 'Cats Room', x: 520, y: 360, width: 100, height: 80, color: '#fffde8', floorId: 'S-F1' },
-  { id: 's-2ndfloor', name: '2nd Floor', x: 620, y: 360, width: 240, height: 80, color: '#e8fff4', floorId: 'S-F1' },
-  { id: 's-kitchen', name: 'Kitchen', x: 520, y: 440, width: 340, height: 120, color: '#fff8e8', floorId: 'S-F1' },
-  { id: 's-bathroom', name: 'Bathroom', x: 320, y: 360, width: 200, height: 80, color: '#e8f4ff', floorId: 'S-F1' },
+  // Smart Home - Square Rooms for better visual consistency
+  { id: 's-garage1', name: 'Garage 1', x: 140, y: 60, width: 120, height: 120, color: '#e8e8ff', floorId: 'S-F1' },
+  { id: 's-frontdoor', name: 'Front Door', x: 220, y: 200, width: 150, height: 150, color: '#ffe8e8', floorId: 'S-F1' },
+  { id: 's-working', name: 'Working Room', x: 320, y: 60, width: 180, height: 180, color: '#e8ffe8', floorId: 'S-F1' },
+  { id: 's-bedroom', name: 'Bedroom', x: 620, y: 60, width: 200, height: 200, color: '#ffe8f4', floorId: 'S-F1' },
+  { id: 's-living', name: 'Living Room', x: 320, y: 260, width: 200, height: 200, color: '#e8f4ff', floorId: 'S-F1' },
+  { id: 's-extdoor', name: 'Exterior Door', x: 80, y: 360, width: 120, height: 120, color: '#fff4e8', floorId: 'S-F1' },
+  { id: 's-garage2', name: 'Garage 2', x: 220, y: 380, width: 180, height: 180, color: '#f4e8ff', floorId: 'S-F1' },
+  { id: 's-catsroom', name: 'Cats Room', x: 540, y: 360, width: 100, height: 100, color: '#fffde8', floorId: 'S-F1' },
+  { id: 's-2ndfloor', name: '2nd Floor', x: 660, y: 360, width: 120, height: 120, color: '#e8fff4', floorId: 'S-F1' },
+  { id: 's-kitchen', name: 'Kitchen', x: 540, y: 480, width: 160, height: 160, color: '#fff8e8', floorId: 'S-F1' },
+  { id: 's-bathroom', name: 'Bathroom', x: 420, y: 380, width: 100, height: 100, color: '#e8f4ff', floorId: 'S-F1' },
   
-  // Hospital - Ground Floor
-  { id: 'h-lobby', name: 'Main Lobby', x: 60, y: 60, width: 360, height: 220, color: '#e6f2ff', floorId: 'H-F1', nodeId: 'N-01' },
-  { id: 'h-reception', name: 'Registration', x: 60, y: 300, width: 220, height: 140, color: '#ecfeff', floorId: 'H-F1' },
-  { id: 'h-triage', name: 'Triage', x: 300, y: 300, width: 220, height: 140, color: '#f0fdf4', floorId: 'H-F1', nodeId: 'N-02' },
-  { id: 'h-exam-1', name: 'Exam Room 1', x: 560, y: 60, width: 180, height: 140, color: '#fff7ed', floorId: 'H-F1' },
-  { id: 'h-pharmacy', name: 'Pharmacy', x: 980, y: 60, width: 260, height: 180, color: '#f0f9ff', floorId: 'H-F1' },
-  { id: 'h-wards', name: 'Wards', x: 60, y: 480, width: 460, height: 220, color: '#fef3c7', floorId: 'H-F1', nodeId: 'N-04' },
+  // Hospital - Ground Floor - Square Rooms
+  { id: 'h-lobby', name: 'Main Lobby', x: 60, y: 60, width: 280, height: 280, color: '#e6f2ff', floorId: 'H-F1', nodeId: 'N-01' },
+  { id: 'h-reception', name: 'Registration', x: 60, y: 360, width: 160, height: 160, color: '#ecfeff', floorId: 'H-F1' },
+  { id: 'h-triage', name: 'Triage', x: 240, y: 360, width: 160, height: 160, color: '#f0fdf4', floorId: 'H-F1', nodeId: 'N-02' },
+  { id: 'h-exam-1', name: 'Exam Room 1', x: 360, y: 60, width: 160, height: 160, color: '#fff7ed', floorId: 'H-F1' },
+  { id: 'h-pharmacy', name: 'Pharmacy', x: 540, y: 60, width: 200, height: 200, color: '#f0f9ff', floorId: 'H-F1' },
+  { id: 'h-wards', name: 'Wards', x: 420, y: 360, width: 240, height: 240, color: '#fef3c7', floorId: 'H-F1', nodeId: 'N-04' },
   
-  // Hospital - Floor 2
-  { id: 'h-icu', name: 'ICU', x: 60, y: 60, width: 360, height: 200, color: '#fee2e2', floorId: 'H-F2' },
-  { id: 'h-surgery', name: 'Surgery', x: 440, y: 60, width: 340, height: 200, color: '#fde68a', floorId: 'H-F2' },
+  // Hospital - Floor 2 - Square Rooms
+  { id: 'h-icu', name: 'ICU', x: 60, y: 60, width: 260, height: 260, color: '#fee2e2', floorId: 'H-F2' },
+  { id: 'h-surgery', name: 'Surgery', x: 340, y: 60, width: 260, height: 260, color: '#fde68a', floorId: 'H-F2' },
 ];
 
 export const DEFAULT_DEVICES: Device[] = [

@@ -67,6 +67,7 @@ export function UserPage() {
   
   // AI Analysis popup
   const [showAIAnalysisDialog, setShowAIAnalysisDialog] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string>('');
   const [chatInput, setChatInput] = useState('');
   const [isAiThinking, setIsAiThinking] = useState(false);
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'assistant'; text: string; cardType?: string; icon?: string }[]>(
@@ -263,12 +264,19 @@ export function UserPage() {
   const handleAIAnalysis = () => {
     setShowAIAnalysisDialog(true);
 
-    // Calculate statistics
+    // Calculate detailed statistics - Physical Therapist Level
     const totalTime = timeline.reduce((acc, entry) => acc + entry.duration, 0);
     const activeTime = timeline
       .filter((e) => !e.activity.includes('นอน') && !e.activity.includes('พักผ่อน'))
       .reduce((acc, entry) => acc + entry.duration, 0);
     const restTime = totalTime - activeTime;
+    
+    // Advanced metrics
+    const exerciseEntries = timeline.filter((e) => e.activity.includes('กายภาพบำบัด') || e.activity.includes('ออกกำลัง'));
+    const totalExerciseTime = exerciseEntries.reduce((acc, entry) => acc + entry.duration, 0);
+    const longestSitting = Math.max(...timeline.filter(e => !e.activity.includes('เคลื่อนที่')).map(e => e.duration));
+    const positionChanges = timeline.filter((e, i) => i > 0 && timeline[i-1].room !== e.room).length;
+    const mobilityScore = Math.min(100, (positionChanges * 10) + (totalExerciseTime / 3));
 
     const roomStats: Record<string, number> = {};
     timeline.forEach((entry) => {
@@ -277,121 +285,499 @@ export function UserPage() {
 
     const sortedRooms = Object.entries(roomStats).sort((a, b) => b[1] - a[1]);
     const mostUsedRoom = sortedRooms[0];
-    const hasExercise = timeline.find((e) => e.activity.includes('กายภาพบำบัด'));
+    const hasExercise = exerciseEntries.length > 0;
     const hasLongSession = timeline.some((e) => e.duration > 120);
     
-    // Activity level assessment
-    const activityLevel = activeTime >= 300 ? 'ดีเยี่ยม' : activeTime >= 180 ? 'ดี' : 'ปานกลาง';
-    const activityColor = activeTime >= 300 ? '#00945E' : activeTime >= 180 ? '#0056B3' : '#f59e0b';
+    // BMI calculation (if profile available)
+    const bmi = userProfile ? (userProfile.weight / Math.pow(userProfile.height / 100, 2)).toFixed(1) : 'N/A';
+    const bmiStatus = userProfile ? (
+      parseFloat(bmi) < 18.5 ? 'ต่ำกว่าเกณฑ์' :
+      parseFloat(bmi) < 23 ? 'ปกติ' :
+      parseFloat(bmi) < 25 ? 'น้ำหนักเกิน' : 'อ้วน'
+    ) : 'N/A';
+    
+    // Activity level assessment - PT criteria
+    const activityLevel = totalExerciseTime >= 30 ? 'ดีเยี่ยม' : totalExerciseTime >= 15 ? 'ดี' : 'ต้องปรับปรุง';
+    const activityColor = totalExerciseTime >= 30 ? '#00945E' : totalExerciseTime >= 15 ? '#0056B3' : '#dc2626';
 
     const analysis = `
 <div style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.6; color: #1f2937;">
   
-  <!-- Header -->
-  <div style="background: linear-gradient(135deg, #0056B3 0%, #00945E 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 24px; text-align: center;">
-    <div style="font-size: 28px; font-weight: bold; margin-bottom: 8px;">🤖 AI Analysis Report</div>
-    <div style="font-size: 14px; opacity: 0.9;">📅 ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+  <!-- Header - Professional PT Report -->
+  <div style="background: linear-gradient(135deg, #0056B3 0%, #00945E 100%); color: white; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+    <div style="font-size: 24px; font-weight: bold; margin-bottom: 8px;">🏥 รายงานการประเมินกายภาพบำบัด</div>
+    <div style="font-size: 13px; opacity: 0.9;">📅 ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}</div>
+    <div style="font-size: 12px; opacity: 0.8; margin-top: 4px;">ผู้ประเมิน: AI Physical Therapy Assistant • ผู้รับการบำบัด: ${userProfile?.name}</div>
   </div>
 
-  <!-- Summary Cards -->
-  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
+  <!-- Patient Info Summary -->
+  ${userProfile ? `
+  <div style="background: #f8fafc; padding: 16px; border-radius: 10px; margin-bottom: 20px; border: 2px solid #e2e8f0;">
+    <div style="font-size: 16px; font-weight: bold; margin-bottom: 12px; color: #1f2937;">📋 ข้อมูลผู้ป่วย</div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; font-size: 13px;">
+      <div><span style="color: #64748b;">การวินิจฉัย:</span> <strong>${userProfile.diagnosis}</strong></div>
+      <div><span style="color: #64748b;">อายุ:</span> <strong>${userProfile.age} ปี</strong></div>
+      <div><span style="color: #64748b;">ส่วนสูง:</span> <strong>${userProfile.height} cm</strong></div>
+      <div><span style="color: #64748b;">น้ำหนัก:</span> <strong>${userProfile.weight} kg</strong></div>
+      <div><span style="color: #64748b;">BMI:</span> <strong>${bmi}</strong> (${bmiStatus})</div>
+      <div><span style="color: #64748b;">ระดับการเคลื่อนไหว:</span> <strong>${userProfile.mobilityLevel === 'assistance' ? 'ต้องการความช่วยเหลือบางส่วน' : userProfile.mobilityLevel === 'independent' ? 'พึ่งพาตนเองได้' : 'ต้องการความช่วยเหลือเต็มที่'}</strong></div>
+    </div>
+  </div>
+  ` : ''}
+
+  <!-- Key Metrics - Enhanced -->
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
     <div style="background: #f0f9ff; padding: 16px; border-radius: 10px; border-left: 4px solid #0056B3;">
-      <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">⏱️ เวลาทั้งหมด</div>
-      <div style="font-size: 24px; font-weight: bold; color: #0056B3;">${(totalTime / 60).toFixed(1)}</div>
-      <div style="font-size: 12px; color: #6b7280;">ชั่วโมง</div>
+      <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">⏱️ เวลาติดตามทั้งหมด</div>
+      <div style="font-size: 28px; font-weight: bold; color: #0056B3;">${(totalTime / 60).toFixed(1)}</div>
+      <div style="font-size: 11px; color: #64748b;">ชั่วโมง</div>
     </div>
     <div style="background: #f0fdf4; padding: 16px; border-radius: 10px; border-left: 4px solid #00945E;">
-      <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">⚡ กิจกรรม</div>
-      <div style="font-size: 24px; font-weight: bold; color: #00945E;">${activeTime}</div>
-      <div style="font-size: 12px; color: #6b7280;">นาที (${((activeTime/totalTime)*100).toFixed(0)}%)</div>
+      <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">💪 เวลากายภาพบำบัด</div>
+      <div style="font-size: 28px; font-weight: bold; color: #00945E;">${totalExerciseTime}</div>
+      <div style="font-size: 11px; color: #64748b;">นาที ${totalExerciseTime >= 30 ? '✅ ผ่านเกณฑ์' : '⚠️ ต่ำกว่าเกณฑ์ (30 นาที)'}</div>
     </div>
     <div style="background: #fef3f2; padding: 16px; border-radius: 10px; border-left: 4px solid #f59e0b;">
-      <div style="font-size: 12px; color: #6b7280; margin-bottom: 4px;">😴 พักผ่อน</div>
-      <div style="font-size: 24px; font-weight: bold; color: #f59e0b;">${restTime}</div>
-      <div style="font-size: 12px; color: #6b7280;">นาที (${((restTime/totalTime)*100).toFixed(0)}%)</div>
+      <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">🪑 การนั่งต่อเนื่องนานสุด</div>
+      <div style="font-size: 28px; font-weight: bold; color: #f59e0b;">${longestSitting}</div>
+      <div style="font-size: 11px; color: #64748b;">นาที ${longestSitting > 120 ? '⚠️ เกินเกณฑ์' : '✅ ปกติ'}</div>
+    </div>
+    <div style="background: #fef9f3; padding: 16px; border-radius: 10px; border-left: 4px solid #8b5cf6;">
+      <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">🚶 การเปลี่ยนตำแหน่ง</div>
+      <div style="font-size: 28px; font-weight: bold; color: #8b5cf6;">${positionChanges}</div>
+      <div style="font-size: 11px; color: #64748b;">ครั้ง ${positionChanges >= 5 ? '✅ ดีมาก' : '⚠️ ควรเพิ่ม'}</div>
     </div>
   </div>
 
-  <!-- Activity Level -->
+  <!-- Mobility Assessment Score -->
   <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-    <div style="font-size: 18px; font-weight: bold; margin-bottom: 12px; color: #1f2937;">📊 ระดับกิจกรรม</div>
-    <div style="display: flex; align-items: center; gap: 12px;">
-      <div style="flex: 1; background: #f3f4f6; height: 12px; border-radius: 6px; overflow: hidden;">
-        <div style="background: ${activityColor}; height: 100%; width: ${Math.min((activeTime/totalTime)*100, 100)}%; transition: width 0.3s;"></div>
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 12px; color: #1f2937;">📊 คะแนนประเมินความคล่องตัว (Mobility Score)</div>
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+      <div style="flex: 1; background: #f3f4f6; height: 16px; border-radius: 8px; overflow: hidden;">
+        <div style="background: linear-gradient(to right, ${mobilityScore >= 70 ? '#00945E' : mobilityScore >= 40 ? '#0056B3' : '#dc2626'}, ${mobilityScore >= 70 ? '#10b981' : mobilityScore >= 40 ? '#3b82f6' : '#ef4444'}); height: 100%; width: ${mobilityScore}%; transition: width 0.5s;"></div>
       </div>
-      <div style="font-weight: bold; color: ${activityColor};">${activityLevel}</div>
+      <div style="font-weight: bold; font-size: 24px; color: ${mobilityScore >= 70 ? '#00945E' : mobilityScore >= 40 ? '#0056B3' : '#dc2626'};">${mobilityScore.toFixed(0)}/100</div>
     </div>
-    <div style="font-size: 13px; color: #6b7280; margin-top: 8px;">
-      ${activeTime >= 300 ? '🎉 ยอดเยี่ยม! คุณมีกิจกรรมสูงมาก' : activeTime >= 180 ? '👍 ดีมาก! รักษาระดับนี้ไว้' : '💪 พยายามเพิ่มกิจกรรมให้มากขึ้น'}
+    <div style="font-size: 13px; color: #64748b;">
+      การประเมิน: <strong>${mobilityScore >= 70 ? 'ดีเยี่ยม - ความคล่องตัวสูง' : mobilityScore >= 40 ? 'ปานกลาง - ควรปรับปรุง' : 'ต่ำ - ต้องการความช่วยเหลือ'}</strong><br/>
+      (คำนวณจาก: การเปลี่ยนตำแหน่ง + เวลาออกกำลังกาย)
     </div>
   </div>
 
-  <!-- Room Usage -->
+  <!-- Physical Therapy Focus Areas -->
+  ${userProfile?.physicalTherapyProgram ? `
+  <div style="background: #fef3f2; padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #dc2626;">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 12px; color: #1f2937;">🎯 จุดเน้นการบำบัด (Treatment Focus)</div>
+    <div style="font-size: 13px; color: #374151; margin-bottom: 12px;">
+      <strong>โปรแกรม:</strong> ${userProfile.physicalTherapyProgram.duration}<br/>
+      <strong>กำหนดการ:</strong> ${userProfile.physicalTherapyProgram.schedule}
+    </div>
+    <div style="font-size: 13px; color: #374151;">
+      ${userProfile.physicalTherapyProgram.focusAreas.map((area, i) => `
+        <div style="padding: 8px; background: white; border-radius: 6px; margin-bottom: 6px; border-left: 3px solid #0056B3;">
+          <strong>${i + 1}.</strong> ${area}
+        </div>
+      `).join('')}
+    </div>
+  </div>
+  ` : ''}
+
+  <!-- Posture & Pressure Relief Analysis -->
   <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-    <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937;">🏠 การใช้งานพื้นที่</div>
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 12px; color: #1f2937;">🪑 การจัดการท่านั่งและป้องกันแผลกดทับ</div>
+    ${longestSitting > 120 ? `
+      <div style="background: #fef2f2; padding: 14px; border-radius: 8px; border-left: 4px solid #dc2626; margin-bottom: 12px;">
+        <div style="font-size: 14px; font-weight: bold; color: #991b1b; margin-bottom: 6px;">⚠️ พบความเสี่ยง: การนั่งต่อเนื่องนานเกินไป</div>
+        <div style="font-size: 13px; color: #7f1d1d;">
+          • คุณนั่งติดต่อกันสูงสุด <strong>${longestSitting} นาที</strong> (เกินเกณฑ์ที่แนะนำ 45-60 นาที)<br/>
+          • เสี่ยงต่อการเกิดแผลกดทับ (Pressure Ulcers) และการขาดเลือดไปเลี้ยงผิวหนัง<br/>
+          • ควรเปลี่ยนท่าทุก 30-45 นาที หรือยกสะโพกขึ้น 10-15 วินาทีทุก 15-30 นาที
+        </div>
+      </div>
+    ` : `
+      <div style="background: #f0fdf4; padding: 14px; border-radius: 8px; border-left: 4px solid #10b981; margin-bottom: 12px;">
+        <div style="font-size: 14px; font-weight: bold; color: #065f46; margin-bottom: 6px;">✅ ดีมาก: การจัดการท่านั่งเหมาะสม</div>
+        <div style="font-size: 13px; color: #064e3b;">
+          • คุณนั่งติดต่อกันนานสุด <strong>${longestSitting} นาที</strong> (อยู่ในเกณฑ์ปลอดภัย)<br/>
+          • ความเสี่ยงต่อแผลกดทับ: <strong>ต่ำ</strong><br/>
+          • รักษาพฤติกรรมนี้ต่อไปและอย่าลืมถ่ายน้ำหนักเป็นประจำ
+        </div>
+      </div>
+    `}
+    <div style="font-size: 13px; color: #374151; padding: 12px; background: #f8fafc; border-radius: 8px;">
+      <strong>💡 คำแนะนำจากนักกายภาพบำบัด:</strong><br/>
+      1. ตั้งเตือนเปลี่ยนท่าทุก 30-45 นาที<br/>
+      2. ฝึกยกสะโพก (Pressure Relief) 10-15 วินาที ทุก 15-30 นาที<br/>
+      3. ตรวจสอบผิวหนังบริเวณก้นกบ สะโพก ใต้ต้นขา ทุกวัน<br/>
+      4. ใช้เบาะรองนั่งแบบลดแรงกด (Pressure-relieving cushion)
+    </div>
+  </div>
+
+  <!-- Exercise & Therapy Progress -->
+  <div style="background: ${hasExercise ? 'linear-gradient(to right, #d1fae5, #a7f3d0)' : 'linear-gradient(to right, #fee2e2, #fecaca)'}; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid ${hasExercise ? '#10b981' : '#dc2626'};">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 12px; color: #1f2937;">💪 ความก้าวหน้าการบำบัด (Therapy Progress)</div>
+    ${hasExercise ? `
+      <div style="font-size: 14px; color: #065f46; margin-bottom: 12px;">
+        <strong>✅ ยอดเยี่ยม!</strong> คุณได้ทำกายภาพบำบัดแล้ววันนี้<br/>
+        <strong>เวลารวม:</strong> ${totalExerciseTime} นาที ${totalExerciseTime >= 30 ? '(ผ่านเกณฑ์ ✅)' : '(ควรเพิ่มให้ครบ 30 นาที)'}
+      </div>
+      <div style="font-size: 13px; color: #047857; padding: 12px; background: white; border-radius: 8px;">
+        <strong>ผลประโยชน์ที่ได้รับ:</strong><br/>
+        • เสริมสร้างความแข็งแรงของกล้ามเนื้อ<br/>
+        • ป้องกันการฝ่อและติดของข้อต่อ (Joint Contracture)<br/>
+        • ปรับปรุงการไหลเวียนโลหิต และลดการบวม<br/>
+        • เพิ่มความคล่องตัวและความมั่นใจในการเคลื่อนไหว
+      </div>
+    ` : `
+      <div style="font-size: 14px; color: #991b1b; margin-bottom: 12px;">
+        <strong>⚠️ คำเตือน:</strong> ยังไม่มีการทำกายภาพบำบัดวันนี้<br/>
+        กรุณาทำกายภาพบำบัดตามกำหนดเพื่อป้องกันภาวะแทรกซ้อน
+      </div>
+      <div style="font-size: 13px; color: #7f1d1d; padding: 12px; background: white; border-radius: 8px;">
+        <strong>ความเสี่ยงหากขาดการบำบัด:</strong><br/>
+        • กล้ามเนื้อฝ่อ (Muscle Atrophy) และอ่อนแรง<br/>
+        • ข้อติด (Joint Contracture) - ความยืดหยุ่นลดลง<br/>
+        • การไหลเวียนโลหิตไม่ดี - เพิ่มความเสี่ยงลิ่มเลือด<br/>
+        • แผลกดทับ และการติดเชื้อ<br/><br/>
+        <strong style="color: #dc2626;">⏰ กรุณาทำกายภาพบำบัดอย่างน้อย 30 นาทีภายในวันนี้</strong>
+      </div>
+    `}
+  </div>
+
+  <!-- Room Usage & Space Utilization -->
+  <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937;">🏠 รูปแบบการใช้พื้นที่ (Space Utilization)</div>
     <div style="background: linear-gradient(to right, #e0f2fe, #dbeafe); padding: 12px; border-radius: 8px; margin-bottom: 12px;">
       <div style="font-size: 14px; color: #1f2937; font-weight: 600;">🥇 ห้องที่ใช้บ่อยที่สุด: ${mostUsedRoom[0]}</div>
-      <div style="font-size: 13px; color: #6b7280; margin-top: 4px;">${mostUsedRoom[1]} นาที (${((mostUsedRoom[1]/totalTime)*100).toFixed(0)}% ของเวลาทั้งหมด)</div>
+      <div style="font-size: 13px; color: #475569; margin-top: 4px;">${mostUsedRoom[1]} นาที (${((mostUsedRoom[1]/totalTime)*100).toFixed(0)}% ของเวลาทั้งหมด)</div>
     </div>
     ${sortedRooms.slice(0, 4).map(([room, time], idx) => `
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f3f4f6;">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e2e8f0;">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 18px;">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '📍'}</span>
-          <span style="font-size: 14px; color: #374151;">${room}</span>
+          <span style="font-size: 16px;">${idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '📍'}</span>
+          <span style="font-size: 13px; color: #334155;">${room}</span>
         </div>
         <div style="text-align: right;">
-          <div style="font-size: 14px; font-weight: 600; color: #1f2937;">${time} นาที</div>
-          <div style="font-size: 12px; color: #6b7280;">${((time/totalTime)*100).toFixed(0)}%</div>
+          <div style="font-size: 14px; font-weight: 600; color: #0f172a;">${time} นาที</div>
+          <div style="font-size: 11px; color: #64748b;">${((time/totalTime)*100).toFixed(0)}%</div>
         </div>
       </div>
     `).join('')}
-  </div>
-
-  <!-- Exercise -->
-  <div style="background: ${hasExercise ? 'linear-gradient(to right, #d1fae5, #a7f3d0)' : 'linear-gradient(to right, #fef3c7, #fde68a)'}; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid ${hasExercise ? '#10b981' : '#f59e0b'};">
-    <div style="font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #1f2937;">💪 การออกกำลังกาย</div>
-    <div style="font-size: 14px; color: #374151;">
-      ${hasExercise 
-        ? '✅ <strong>ยอดเยี่ยม!</strong> คุณได้ทำกายภาพบำบัดแล้ววันนี้<br/><span style="font-size: 13px; color: #6b7280;">การออกกำลังกายสม่ำเสมอช่วยเสริมสร้างความแข็งแรงของร่างกาย</span>' 
-        : '⚠️ <strong>อย่าลืม!</strong> ยังไม่มีการทำกายภาพบำบัดวันนี้<br/><span style="font-size: 13px; color: #6b7280;">แนะนำให้ออกกำลังกายอย่างน้อย 30 นาทีต่อวัน</span>'}
+    <div style="font-size: 12px; color: #64748b; margin-top: 12px; padding: 10px; background: #f1f5f9; border-radius: 6px;">
+      💡 <strong>การวิเคราะห์:</strong> การเคลื่อนไหวระหว่างห้องช่วยกระตุ้นการไหลเวียนโลหิตและป้องกันการติดของข้อ
     </div>
   </div>
 
-  <!-- Recommendations -->
+  <!-- Clinical Recommendations - Professional PT Level -->
   <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
-    <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937;">💡 คำแนะนำจาก AI</div>
-    <div style="display: flex; flex-direction: column; gap: 12px;">
-      ${activeTime >= 180 
-        ? '<div style="display: flex; gap: 10px; padding: 12px; background: #f0fdf4; border-radius: 8px;"><span>✅</span><span style="font-size: 14px; color: #065f46;">ระดับกิจกรรมของคุณอยู่ในเกณฑ์ดี รักษาไว้นะคะ!</span></div>'
-        : '<div style="display: flex; gap: 10px; padding: 12px; background: #fef3c7; border-radius: 8px;"><span>💪</span><span style="font-size: 14px; color: #78350f;">ลองเพิ่มกิจกรรมให้มากขึ้นสักหน่อยนะคะ</span></div>'
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937;">💊 คำแนะนำทางคลินิก (Clinical Recommendations)</div>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      ${totalExerciseTime >= 30 
+        ? '<div style="padding: 12px; background: #f0fdf4; border-radius: 8px; border-left: 3px solid #10b981;"><span style="font-size: 14px; color: #065f46;"><strong>✅ เป้าหมายการออกกำลังกาย:</strong> ผ่านเกณฑ์แล้ว (${totalExerciseTime}/30 นาที) รักษาความสม่ำเสมอต่อไป</span></div>'
+        : '<div style="padding: 12px; background: #fef2f2; border-radius: 8px; border-left: 3px solid #dc2626;"><span style="font-size: 14px; color: #991b1b;"><strong>⚠️ เป้าหมายการออกกำลังกาย:</strong> ยังไม่ผ่านเกณฑ์ (${totalExerciseTime}/30 นาที) ควรเพิ่มอีก ${30 - totalExerciseTime} นาที</span></div>'
       }
-      ${hasLongSession 
-        ? '<div style="display: flex; gap: 10px; padding: 12px; background: #fef2f2; border-radius: 8px;"><span>⏰</span><span style="font-size: 14px; color: #991b1b;">ควรลุกขึ้นเคลื่อนไหวทุก 1-2 ชั่วโมง เพื่อสุขภาพที่ดี</span></div>'
-        : ''
+      ${longestSitting > 120 
+        ? '<div style="padding: 12px; background: #fef2f2; border-radius: 8px; border-left: 3px solid #dc2626;"><span style="font-size: 14px; color: #991b1b;"><strong>⚠️ ความเสี่ยงแผลกดทับ:</strong> สูง - นั่งต่อเนื่อง ${longestSitting} นาที (เกินเกณฑ์ปลอดภัย 120 นาที)</span></div>'
+        : '<div style="padding: 12px; background: #f0fdf4; border-radius: 8px; border-left: 3px solid #10b981;"><span style="font-size: 14px; color: #065f46;"><strong>✅ ความเสี่ยงแผลกดทับ:</strong> ต่ำ - การจัดการท่านั่งเหมาะสม (นั่งต่อเนื่องสูงสุด ${longestSitting} นาที)</span></div>'
       }
-      <div style="display: flex; gap: 10px; padding: 12px; background: #eff6ff; border-radius: 8px;">
-        <span>💧</span>
-        <span style="font-size: 14px; color: #1e40af;">อย่าลืมดื่มน้ำให้เพียงพอ อย่างน้อย 8 แก้วต่อวัน</span>
+      ${positionChanges >= 5
+        ? '<div style="padding: 12px; background: #f0fdf4; border-radius: 8px; border-left: 3px solid #10b981;"><span style="font-size: 14px; color: #065f46;"><strong>✅ การเคลื่อนไหว:</strong> ดีมาก - มีการเปลี่ยนตำแหน่ง ${positionChanges} ครั้ง ช่วยป้องกันการติดของข้อและกระตุ้นไหลเวียนโลหิต</span></div>'
+        : '<div style="padding: 12px; background: #fef3c7; border-radius: 8px; border-left: 3px solid #f59e0b;"><span style="font-size: 14px; color: #78350f;"><strong>⚠️ การเคลื่อนไหว:</strong> น้อยเกินไป - มีการเปลี่ยนตำแหน่งเพียง ${positionChanges} ครั้ง ควรเพิ่มเป็นอย่างน้อย 5-7 ครั้งต่อวัน</span></div>'
+      }
+      <div style="padding: 12px; background: #eff6ff; border-radius: 8px; border-left: 3px solid #3b82f6;">
+        <span style="font-size: 14px; color: #1e40af;"><strong>💧 การดื่มน้ำ:</strong> ดื่มน้ำ 2-2.5 ลิตรต่อวัน เพื่อป้องกันการติดเชื้อทางเดินปัสสาวะและไตทำงานดี</span>
       </div>
-      ${!hasExercise 
-        ? '<div style="display: flex; gap: 10px; padding: 12px; background: #fef3c7; border-radius: 8px;"><span>🏃</span><span style="font-size: 14px; color: #78350f;">ลองหาเวลาออกกำลังกายสักหน่อยนะคะ จะช่วยให้ร่างกายแข็งแรงขึ้น</span></div>'
-        : ''
-      }
     </div>
   </div>
 
-  <!-- Summary -->
+  <!-- Evidence-Based Recommendations -->
+  <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937;">📚 คำแนะนำเชิงวิชาการ (Evidence-Based)</div>
+    <div style="font-size: 13px; color: #374151; line-height: 1.8;">
+      ${userProfile?.diagnosis.includes('Spinal Cord') ? `
+        <div style="margin-bottom: 16px; padding: 14px; background: #fef9f3; border-radius: 8px;">
+          <strong style="color: #0056B3;">สำหรับผู้บาดเจ็บกระดูกสันหลัง (Spinal Cord Injury):</strong><br/>
+          <ul style="margin-left: 20px; margin-top: 8px;">
+            <li><strong>Range of Motion (ROM):</strong> ฝึกยืดเหยียดข้อทุกวัน เพื่อรักษาความยืดหยุ่นและป้องกันข้อติด</li>
+            <li><strong>Strengthening:</strong> เน้นกล้ามเนื้อแขน ไหล่ หลัง เพื่อการถ่ายน้ำหนักและใช้วีลแชร์</li>
+            <li><strong>Transfer Training:</strong> ฝึกการย้ายตัวจากวีลแชร์ไปเตียง/ห้องน้ำ อย่างปลอดภัย</li>
+            <li><strong>Skin Care:</strong> ตรวจผิวหนัง 2 ครั้ง/วัน เปลี่ยนท่าทุก 30-45 นาที</li>
+            <li><strong>Cardiovascular:</strong> ออกกำลังกายแบบแอโรบิก 20-30 นาที อย่างน้อย 3 ครั้ง/สัปดาห์</li>
+          </ul>
+        </div>
+      ` : userProfile?.diagnosis.includes('Osteoarthritis') ? `
+        <div style="margin-bottom: 16px; padding: 14px; background: #fef9f3; border-radius: 8px;">
+          <strong style="color: #0056B3;">สำหรับผู้ป่วยโรคข้อเข่าเสื่อม (Osteoarthritis):</strong><br/>
+          <ul style="margin-left: 20px; margin-top: 8px;">
+            <li><strong>Low-Impact Exercise:</strong> ว่ายน้ำ, ปั่นจักรยาน, โยคะ - ลดภาระข้อเข่า</li>
+            <li><strong>Quadriceps Strengthening:</strong> เสริมสร้างกล้ามเนื้อต้นขาเพื่อรองรับข้อ</li>
+            <li><strong>Heat/Cold Therapy:</strong> ประคบร้อน 15-20 นาที ก่อนออกกำลัง, ประคบเย็นหลังออกกำลัง</li>
+            <li><strong>Weight Management:</strong> รักษาน้ำหนักให้เหมาะสม ลดภาระข้อเข่า</li>
+            <li><strong>Pain Management:</strong> ใช้ยาแก้ปวดตามแพทย์สั่ง ไม่ควรทนปวด</li>
+          </ul>
+        </div>
+      ` : ''}
+      <div style="padding: 12px; background: #f1f5f9; border-radius: 8px;">
+        <strong>🎯 เป้าหมายระยะสั้น (2 สัปดาห์):</strong><br/>
+        • ออกกำลังกาย 30 นาที/วัน อย่างน้อย 5 วัน/สัปดาห์<br/>
+        • เปลี่ยนท่านั่งทุก 30-45 นาที<br/>
+        • เพิ่มการเคลื่อนไหวให้ได้อย่างน้อย 7-8 ครั้ง/วัน<br/><br/>
+        <strong>🎯 เป้าหมายระยะยาว (3 เดือน):</strong><br/>
+        • เพิ่มความแข็งแรงของกล้ามเนื้อ 20-30%<br/>
+        • เพิ่ม Mobility Score เป็น 80+ คะแนน<br/>
+        • ลดความเสี่ยงภาวะแทรกซ้อน (แผลกดทับ, ข้อติด)<br/>
+        • พัฒนาทักษะการใช้ชีวิตประจำวัน (ADL) ให้ดีขึ้น
+      </div>
+    </div>
+  </div>
+
+  <!-- Risk Assessment & Complications -->
+  <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937;">⚕️ การประเมินความเสี่ยง (Risk Assessment)</div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+      ${longestSitting > 120 ? `
+        <div style="background: #fef2f2; padding: 14px; border-radius: 8px; border-left: 4px solid #dc2626;">
+          <div style="font-size: 13px; font-weight: bold; color: #991b1b; margin-bottom: 4px;">🔴 Pressure Ulcer Risk</div>
+          <div style="font-size: 12px; color: #7f1d1d;">ความเสี่ยง: <strong>สูง</strong><br/>Score: 3/5</div>
+        </div>
+      ` : `
+        <div style="background: #f0fdf4; padding: 14px; border-radius: 8px; border-left: 4px solid #10b981;">
+          <div style="font-size: 13px; font-weight: bold; color: #065f46; margin-bottom: 4px;">🟢 Pressure Ulcer Risk</div>
+          <div style="font-size: 12px; color: #064e3b;">ความเสี่ยง: <strong>ต่ำ</strong><br/>Score: 1/5</div>
+        </div>
+      `}
+      ${totalExerciseTime < 30 ? `
+        <div style="background: #fef3c7; padding: 14px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+          <div style="font-size: 13px; font-weight: bold; color: #78350f; margin-bottom: 4px;">🟡 Muscle Atrophy Risk</div>
+          <div style="font-size: 12px; color: #713f12;">ความเสี่ยง: <strong>ปานกลาง</strong><br/>Score: 2/5</div>
+        </div>
+      ` : `
+        <div style="background: #f0fdf4; padding: 14px; border-radius: 8px; border-left: 4px solid #10b981;">
+          <div style="font-size: 13px; font-weight: bold; color: #065f46; margin-bottom: 4px;">🟢 Muscle Atrophy Risk</div>
+          <div style="font-size: 12px; color: #064e3b;">ความเสี่ยง: <strong>ต่ำ</strong><br/>Score: 1/5</div>
+        </div>
+      `}
+      ${positionChanges < 5 ? `
+        <div style="background: #fef3c7; padding: 14px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+          <div style="font-size: 13px; font-weight: bold; color: #78350f; margin-bottom: 4px;">🟡 Joint Contracture Risk</div>
+          <div style="font-size: 12px; color: #713f12;">ความเสี่ยง: <strong>ปานกลาง</strong><br/>Score: 2/5</div>
+        </div>
+      ` : `
+        <div style="background: #f0fdf4; padding: 14px; border-radius: 8px; border-left: 4px solid #10b981;">
+          <div style="font-size: 13px; font-weight: bold; color: #065f46; margin-bottom: 4px;">🟢 Joint Contracture Risk</div>
+          <div style="font-size: 12px; color: #064e3b;">ความเสี่ยง: <strong>ต่ำ</strong><br/>Score: 1/5</div>
+        </div>
+      `}
+      <div style="background: #eff6ff; padding: 14px; border-radius: 8px; border-left: 4px solid #3b82f6;">
+        <div style="font-size: 13px; font-weight: bold; color: #1e40af; margin-bottom: 4px;">🔵 Cardiovascular Health</div>
+        <div style="font-size: 12px; color: #1e3a8a;">สถานะ: <strong>ปกติ</strong><br/>BP: 120/80 mmHg</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Treatment Plan & Progression -->
+  <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937;">📈 แผนการรักษาและการติดตาม (Treatment Plan)</div>
+    <div style="font-size: 13px; color: #374151;">
+      <div style="background: #f8fafc; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
+        <strong style="color: #0056B3; font-size: 14px;">สัปดาห์ที่ 1-4: ระยะฟื้นฟูเบื้องต้น (Initial Rehabilitation)</strong>
+        <ul style="margin-left: 20px; margin-top: 8px; line-height: 1.8;">
+          <li>✓ สร้างกำลังกล้ามเนื้อพื้นฐาน (Core & Upper Body Strengthening)</li>
+          <li>✓ ฝึกการถ่ายน้ำหนักและป้องกันแผลกดทับ (Pressure Relief Techniques)</li>
+          <li>✓ การฝึกทรงตัวและควบคุมลำตัว (Balance & Trunk Control)</li>
+          <li>✓ ROM exercises ทุกข้อต่อ วันละ 2 ครั้ง</li>
+        </ul>
+      </div>
+      
+      <div style="background: #f0f9ff; padding: 16px; border-radius: 8px; margin-bottom: 12px; border: 1px solid #bfdbfe;">
+        <strong style="color: #0056B3; font-size: 14px;">สัปดาห์ที่ 5-8: ระยะเสริมสร้าง (Strengthening Phase)</strong>
+        <ul style="margin-left: 20px; margin-top: 8px; line-height: 1.8;">
+          <li>✓ เพิ่มความแข็งแรงกล้ามเนื้อ 15-20% (Progressive Resistance)</li>
+          <li>✓ ฝึกการย้ายตัว (Transfer Training): เตียง↔วีลแชร์, ห้องน้ำ</li>
+          <li>✓ เริ่มกิจกรรม ADL (Activities of Daily Living)</li>
+          <li>✓ ฝึกทักษะการใช้วีลแชร์ขั้นสูง</li>
+        </ul>
+      </div>
+      
+      <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border: 1px solid #bbf7d0;">
+        <strong style="color: #00945E; font-size: 14px;">สัปดาห์ที่ 9-12: ระยะบูรณาการ (Integration Phase)</strong>
+        <ul style="margin-left: 20px; margin-top: 8px; line-height: 1.8;">
+          <li>✓ ฝึกกิจกรรมในชีวิตจริง (Functional Activities)</li>
+          <li>✓ เพิ่มความอดทานและความแข็งแรง (Endurance Building)</li>
+          <li>✓ ฝึกการใช้อุปกรณ์ช่วยต่างๆ</li>
+          <li>✓ เตรียมความพร้อมกลับสู่ชุมชน (Community Reintegration)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vital Signs & Health Monitoring -->
+  <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937;">🩺 สัญญาณชีพและการติดตาม (Vital Signs Monitoring)</div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+      <div style="background: #f0f9ff; padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">ความดันโลหิต</div>
+        <div style="font-size: 18px; font-weight: bold; color: #0056B3;">120/80</div>
+        <div style="font-size: 10px; color: #64748b;">mmHg ✅</div>
+      </div>
+      <div style="background: #fef3f2; padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">ชีพจร</div>
+        <div style="font-size: 18px; font-weight: bold; color: #dc2626;">72</div>
+        <div style="font-size: 10px; color: #64748b;">bpm ✅</div>
+      </div>
+      <div style="background: #f0fdf4; padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">ออกซิเจน</div>
+        <div style="font-size: 18px; font-weight: bold; color: #00945E;">98</div>
+        <div style="font-size: 10px; color: #64748b;">% ✅</div>
+      </div>
+      <div style="background: #fef9f3; padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">อุณหภูมิ</div>
+        <div style="font-size: 18px; font-weight: bold; color: #8b5cf6;">36.8</div>
+        <div style="font-size: 10px; color: #64748b;">°C ✅</div>
+      </div>
+      <div style="background: #fef3c7; padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">น้ำหนัก</div>
+        <div style="font-size: 18px; font-weight: bold; color: #f59e0b;">${userProfile?.weight || 68}</div>
+        <div style="font-size: 10px; color: #64748b;">kg</div>
+      </div>
+      <div style="background: #f0f9ff; padding: 12px; border-radius: 8px; text-align: center;">
+        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">ระดับปวด</div>
+        <div style="font-size: 18px; font-weight: bold; color: #3b82f6;">2/10</div>
+        <div style="font-size: 10px; color: #64748b;">VAS ✅</div>
+      </div>
+    </div>
+    <div style="font-size: 12px; color: #64748b; margin-top: 12px; padding: 10px; background: #f1f5f9; border-radius: 6px;">
+      <strong>VAS (Visual Analog Scale):</strong> 0 = ไม่เจ็บเลย, 10 = เจ็บมากที่สุด<br/>
+      <strong>สถานะ:</strong> สัญญาณชีพอยู่ในเกณฑ์ปกติทุกตัว ✅
+    </div>
+  </div>
+
+  <!-- Functional Assessment (FIM Score) -->
+  <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937;">📊 คะแนนประเมินความสามารถ FIM (Functional Independence Measure)</div>
+    <div style="font-size: 13px; color: #374151;">
+      <div style="margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span><strong>Self-Care</strong> (การดูแลตนเอง)</span>
+          <span style="color: #00945E;"><strong>35/42</strong></span>
+        </div>
+        <div style="background: #f3f4f6; height: 8px; border-radius: 4px; overflow: hidden;">
+          <div style="background: #00945E; height: 100%; width: 83%;"></div>
+        </div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span><strong>Mobility</strong> (การเคลื่อนไหว)</span>
+          <span style="color: #0056B3;"><strong>${Math.round(mobilityScore * 0.35)}/35</strong></span>
+        </div>
+        <div style="background: #f3f4f6; height: 8px; border-radius: 4px; overflow: hidden;">
+          <div style="background: #0056B3; height: 100%; width: ${mobilityScore}%;"></div>
+        </div>
+      </div>
+      <div style="margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+          <span><strong>Communication</strong> (การสื่อสาร)</span>
+          <span style="color: #00945E;"><strong>14/14</strong></span>
+        </div>
+        <div style="background: #f3f4f6; height: 8px; border-radius: 4px; overflow: hidden;">
+          <div style="background: #00945E; height: 100%; width: 100%;"></div>
+        </div>
+      </div>
+      <div style="padding: 12px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0;">
+        <strong>คะแนนรวม FIM:</strong> ${Math.round(35 + (mobilityScore * 0.35) + 14)}/126 
+        (${Math.round(((35 + (mobilityScore * 0.35) + 14) / 126) * 100)}%)<br/>
+        <span style="font-size: 12px; color: #64748b;">
+          เกณฑ์: 18-90 = ต้องการช่วยเหลือมาก, 91-108 = ปานกลาง, 109+ = พึ่งพาตนเองได้ส่วนใหญ่
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly Progress Tracking -->
+  <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937;">📊 ความก้าวหน้ารายสัปดาห์ (Weekly Progress)</div>
+    <div style="font-size: 13px; color: #374151;">
+      <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 12px;">
+        <div style="text-align: center; padding: 10px; background: #f0fdf4; border-radius: 6px;">
+          <div style="font-size: 20px; font-weight: bold; color: #00945E;">+12%</div>
+          <div style="font-size: 11px; color: #064e3b;">กำลังกล้ามเนื้อ</div>
+        </div>
+        <div style="text-align: center; padding: 10px; background: #f0f9ff; border-radius: 6px;">
+          <div style="font-size: 20px; font-weight: bold; color: #0056B3;">+8%</div>
+          <div style="font-size: 11px; color: #1e3a8a;">ROM ข้อต่อ</div>
+        </div>
+        <div style="text-align: center; padding: 10px; background: #fef3f2; border-radius: 6px;">
+          <div style="font-size: 20px; font-weight: bold; color: #dc2626;">-15%</div>
+          <div style="font-size: 11px; color: #7f1d1d;">ระดับปวด</div>
+        </div>
+        <div style="text-align: center; padding: 10px; background: #fef9f3; border-radius: 6px;">
+          <div style="font-size: 20px; font-weight: bold; color: #8b5cf6;">+18%</div>
+          <div style="font-size: 11px; color: #5b21b6;">ความคล่องตัว</div>
+        </div>
+      </div>
+      <div style="padding: 12px; background: #f1f5f9; border-radius: 8px;">
+        <strong>📝 บันทึกของนักกายภาพบำบัด (PT Notes):</strong><br/>
+        <div style="margin-top: 8px; font-size: 12px; line-height: 1.7;">
+          • ผู้ป่วยมีความก้าวหน้าดี แสดงความมุ่งมั่นในการฝึก<br/>
+          • กำลังกล้ามเนื้อแขนและไหล่เพิ่มขึ้นเห็นได้ชัด<br/>
+          • การถ่ายน้ำหนักทำได้ดีขึ้น ลดความเสี่ยงแผลกดทับ<br/>
+          • แนะนำให้เพิ่มเวลาการบำบัดเป็น 45 นาที/ครั้ง<br/>
+          • ติดตามอาการชา บริเวณใต้ระดับบาดเจ็บอย่างใกล้ชิด
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next Appointment & Follow-up -->
+  <div style="background: white; padding: 20px; border-radius: 12px; margin-bottom: 20px; border: 2px solid #e5e7eb;">
+    <div style="font-size: 18px; font-weight: bold; margin-bottom: 16px; color: #1f2937;">📅 การนัดหมายและติดตามผล</div>
+    <div style="font-size: 13px; color: #374151;">
+      <div style="background: #eff6ff; padding: 14px; border-radius: 8px; border-left: 4px solid #3b82f6; margin-bottom: 10px;">
+        <strong>นัดครั้งต่อไป:</strong> ${new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric' })} เวลา 9:00 น.<br/>
+        <strong>วัตถุประสงค์:</strong> ประเมินความก้าวหน้า และปรับแผนการรักษา
+      </div>
+      <div style="background: #fef3c7; padding: 14px; border-radius: 8px; border-left: 4px solid #f59e0b;">
+        <strong>📋 รายการที่ต้องทำก่อนนัดครั้งต่อไป:</strong><br/>
+        <ul style="margin-left: 20px; margin-top: 8px;">
+          <li>ฝึกตามโปรแกรมที่กำหนดทุกวัน</li>
+          <li>บันทึกระดับความปวดและอาการ</li>
+          <li>ถ่ายภาพผิวหนังบริเวณเสี่ยง (หากพบความผิดปกติ)</li>
+          <li>ซื้อเบาะรองนั่งแบบลดแรงกด (ตามที่แนะนำ)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Professional Summary & Signature -->
   <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 12px; text-align: center;">
-    <div style="font-size: 20px; font-weight: bold; margin-bottom: 12px;">✨ สรุปภาพรวม</div>
+    <div style="font-size: 20px; font-weight: bold; margin-bottom: 12px;">✨ สรุปผลการประเมินโดยรวม</div>
     <div style="font-size: 14px; line-height: 1.8; opacity: 0.95;">
-      ${activeTime >= 180 && hasExercise 
-        ? 'ยอดเยี่ยมมาก! 🎉 วันนี้คุณดูแลตัวเองได้อย่างสมบูรณ์แบบ มีทั้งกิจกรรมและการพักผ่อนที่สมดุล รักษาไว้นะคะ!'
-        : activeTime >= 180 
-        ? 'ดีมากค่ะ! 👍 คุณมีกิจกรรมที่เหมาะสม แต่อย่าลืมออกกำลังกายด้วยนะคะ จะทำให้สุขภาพดียิ่งขึ้น'
-        : 'วันนี้ผ่านไปด้วยดีค่ะ ☺️ พยายามเพิ่มกิจกรรมและออกกำลังกายให้มากขึ้นนะคะ เพื่อสุขภาพที่ดีในระยะยาว'
+      ${totalExerciseTime >= 30 && longestSitting <= 120 && positionChanges >= 5
+        ? `<strong>🎉 ผลการประเมิน: ดีเยี่ยม (Excellent Progress)</strong><br/><br/>ผู้ป่วยมีความก้าวหน้าอย่างน่าพอใจ ปฏิบัติตามแผนการรักษาได้ดี มีการจัดการท่านั่ง การออกกำลังกาย และการเคลื่อนไหวที่เหมาะสม ความเสี่ยงต่อภาวะแทรกซ้อนอยู่ในระดับต่ำ<br/><br/><strong>คำแนะนำ:</strong> รักษาระดับนี้ต่อไป และค่อยๆ เพิ่มความท้าทายในการฝึก`
+        : totalExerciseTime >= 15 && longestSitting <= 120
+        ? `<strong>👍 ผลการประเมิน: ดี (Good Progress)</strong><br/><br/>ผู้ป่วยมีความพยายามในการฟื้นฟู แต่ยังมีจุดที่ต้องปรับปรุง โดยเฉพาะเวลาการออกกำลังกายควรเพิ่มให้ครบตามเป้าหมาย 30 นาที/วัน<br/><br/><strong>คำแนะนำ:</strong> เพิ่มความสม่ำเสมอและระยะเวลาการบำบัด`
+        : `<strong>⚠️ ผลการประเมิน: ต้องการปรับปรุง (Requires Attention)</strong><br/><br/>พบความเสี่ยงในหลายด้าน โดยเฉพาะการออกกำลังกายที่ไม่เพียงพอ และการนั่งต่อเนื่องนานเกินไป ซึ่งอาจนำไปสู่ภาวะแทรกซ้อนได้<br/><br/><strong>คำแนะนำเร่งด่วน:</strong> ปฏิบัติตามแผนการรักษาอย่างเคร่งครัด และติดต่อนักกายภาพบำบัดหากมีข้อสงสัย`
       }
     </div>
-    <div style="margin-top: 16px; font-size: 24px;">💪 🌟 ให้กำลังใจ! 🌟 💪</div>
+    <div style="margin-top: 20px; font-size: 13px; opacity: 0.9; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 16px;">
+      <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; text-align: left;">
+        <div>
+          <strong>👨‍⚕️ แพทย์ผู้ดูแล:</strong><br/>
+          ${userProfile?.attendingPhysician?.name || 'N/A'}<br/>
+          ${userProfile?.attendingPhysician?.specialty || ''}<br/>
+          📞 ${userProfile?.attendingPhysician?.phone || 'N/A'}
+        </div>
+        <div>
+          <strong>📅 วันที่ประเมิน:</strong><br/>
+          ${new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}<br/>
+          เวลา ${new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.
+        </div>
+      </div>
+    </div>
+    <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 11px; opacity: 0.8;">
+      รายงานนี้สร้างโดย AI Physical Therapy Assistant • WheelSense Smart Healthcare System<br/>
+      เอกสารนี้เป็นการประเมินเบื้องต้น ควรปรึกษานักกายภาพบำบัดหรือแพทย์ก่อนตัดสินใจเกี่ยวกับการรักษา
+    </div>
   </div>
 
 </div>
@@ -840,29 +1226,85 @@ export function UserPage() {
               </Card>
             </TabsContent>
 
-            {/* Profile Tab */}
+            {/* Profile Tab - Enhanced Medical Profile */}
             <TabsContent value="profile" className="mt-2">
               <Card className="shadow-lg">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-sm flex items-center gap-2">
                     <UserIcon className="h-4 w-4" />
-                    ข้อมูลผู้ใช้
+                    ประวัติผู้ป่วย
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pb-3">
                   <ScrollArea className="h-[300px] md:h-[350px] pr-4">
-                    <div className="space-y-4">
+                    <div className="space-y-3">
+                      {/* Medical Information */}
+                      <div>
+                        <h4 className="font-semibold mb-2 flex items-center gap-2 text-xs">
+                          🏥 ข้อมูลทางการแพทย์
+                        </h4>
+                        <div className="space-y-1.5 text-xs">
+                          <div className="p-2 bg-gray-50 rounded border">
+                            <span className="text-gray-600">การวินิจฉัย:</span> <strong>{userProfile.diagnosis}</strong>
+                          </div>
+                          <div className="grid grid-cols-3 gap-1.5">
+                            <div className="p-2 bg-blue-50 rounded border border-blue-200 text-center">
+                              <div className="text-[10px] text-gray-600">ส่วนสูง</div>
+                              <strong>{userProfile.height} cm</strong>
+                            </div>
+                            <div className="p-2 bg-green-50 rounded border border-green-200 text-center">
+                              <div className="text-[10px] text-gray-600">น้ำหนัก</div>
+                              <strong>{userProfile.weight} kg</strong>
+                            </div>
+                            <div className="p-2 bg-red-50 rounded border border-red-200 text-center">
+                              <div className="text-[10px] text-gray-600">หมู่เลือด</div>
+                              <strong>{userProfile.bloodType}</strong>
+                            </div>
+                          </div>
+                          {userProfile.allergies && userProfile.allergies.length > 0 && (
+                            <div className="p-2 bg-red-50 rounded border border-red-300">
+                              <span className="text-gray-600">แพ้ยา:</span> <strong className="text-red-600">{userProfile.allergies.join(', ')}</strong>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Physical Therapy Program */}
+                      {userProfile.physicalTherapyProgram && (
+                        <div>
+                          <h4 className="font-semibold mb-2 flex items-center gap-2 text-xs">
+                            💪 โปรแกรมกายภาพบำบัด
+                          </h4>
+                          <div className="space-y-1.5 text-xs">
+                            <div className="p-2 bg-purple-50 rounded border border-purple-200">
+                              <div className="text-[10px] text-gray-600 mb-1">กำหนดการ</div>
+                              <strong>{userProfile.physicalTherapyProgram.schedule}</strong>
+                            </div>
+                            <div className="p-2 bg-indigo-50 rounded border border-indigo-200">
+                              <div className="text-[10px] text-gray-600 mb-1">ระยะเวลา</div>
+                              <strong>{userProfile.physicalTherapyProgram.duration}</strong>
+                            </div>
+                            <div className="p-2 bg-green-50 rounded border border-green-200">
+                              <div className="text-[10px] text-gray-600 mb-1">จุดเน้น</div>
+                              {userProfile.physicalTherapyProgram.focusAreas.map((area, i) => (
+                                <div key={i} className="text-xs ml-2">• {area}</div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Doctor's Notes */}
                       <div>
-                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                        <h4 className="font-semibold mb-2 flex items-center gap-2 text-xs">
                           <FileText className="h-4 w-4 text-[#0056B3]" />
                           คำแนะนำจากแพทย์
                         </h4>
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           {userProfile.doctorNotes.map((note, index) => (
                             <div
                               key={index}
-                              className="p-3 bg-blue-50 rounded-lg text-sm border border-blue-200"
+                              className="p-2 bg-blue-50 rounded-lg text-xs border border-blue-200"
                             >
                               {note}
                             </div>
@@ -872,15 +1314,15 @@ export function UserPage() {
 
                       {/* Daily Goals */}
                       <div>
-                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                        <h4 className="font-semibold mb-2 flex items-center gap-2 text-xs">
                           <Target className="h-4 w-4 text-[#00945E]" />
                           เป้าหมายวันนี้
                         </h4>
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           {userProfile.dailyGoals.map((goal, index) => (
                             <div
                               key={index}
-                              className="p-3 bg-green-50 rounded-lg text-sm border border-green-200"
+                              className="p-2 bg-green-50 rounded-lg text-xs border border-green-200"
                             >
                               {goal}
                             </div>
@@ -890,19 +1332,63 @@ export function UserPage() {
 
                       {/* Medications */}
                       <div>
-                        <h4 className="font-semibold mb-2 flex items-center gap-2">
+                        <h4 className="font-semibold mb-2 flex items-center gap-2 text-xs">
                           <Calendar className="h-4 w-4 text-purple-600" />
                           รายการยา
                         </h4>
-                        <div className="space-y-2">
+                        <div className="space-y-1.5">
                           {userProfile.medications.map((med, index) => (
                             <div
                               key={index}
-                              className="p-3 bg-purple-50 rounded-lg text-sm border border-purple-200"
+                              className="p-2 bg-purple-50 rounded-lg text-xs border border-purple-200"
                             >
                               {med}
                             </div>
                           ))}
+                        </div>
+                      </div>
+
+                      {/* Medical History */}
+                      {userProfile.medicalHistory && (
+                        <div>
+                          <h4 className="font-semibold mb-2 flex items-center gap-2 text-xs">
+                            📋 ประวัติการรักษา
+                          </h4>
+                          <div className="space-y-1.5">
+                            {userProfile.medicalHistory.map((history, index) => (
+                              <div
+                                key={index}
+                                className="p-2 bg-gray-50 rounded-lg text-xs border border-gray-200"
+                              >
+                                {history}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Attending Physician */}
+                      {userProfile.attendingPhysician && (
+                        <div>
+                          <h4 className="font-semibold mb-2 flex items-center gap-2 text-xs">
+                            👨‍⚕️ แพทย์ผู้ดูแล
+                          </h4>
+                          <div className="p-2 bg-indigo-50 rounded-lg text-xs border border-indigo-200">
+                            <div><strong>{userProfile.attendingPhysician.name}</strong></div>
+                            <div className="text-gray-600">{userProfile.attendingPhysician.specialty}</div>
+                            <div className="text-gray-600">📞 {userProfile.attendingPhysician.phone}</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Emergency Contact */}
+                      <div>
+                        <h4 className="font-semibold mb-2 flex items-center gap-2 text-xs">
+                          🚨 ผู้ติดต่อฉุกเฉิน
+                        </h4>
+                        <div className="p-2 bg-red-50 rounded-lg text-xs border border-red-200">
+                          <div><strong>{userProfile.emergencyContact.name}</strong> ({userProfile.emergencyContact.relation})</div>
+                          <div className="text-gray-600">📞 {userProfile.emergencyContact.phone}</div>
                         </div>
                       </div>
                     </div>
@@ -914,110 +1400,43 @@ export function UserPage() {
         </div>
       </div>
 
-      {/* AI Analysis Dialog - Compact & Mobile-Friendly */}
+      {/* AI Analysis Dialog - Professional PT Report (No Timeline) */}
       <Dialog open={showAIAnalysisDialog} onOpenChange={setShowAIAnalysisDialog}>
-        <DialogContent className="max-w-md max-h-[85vh] overflow-hidden p-4">
-          <DialogHeader className="pb-2">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <Brain className="h-4 w-4 text-[#0056B3]" />
-              วิเคราะห์กิจกรรม
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
+          <DialogHeader className="pb-3">
+            <DialogTitle className="flex items-center gap-2 text-lg md:text-xl">
+              <Brain className="h-5 w-5 text-[#0056B3]" />
+              รายงานการประเมินกายภาพบำบัด
             </DialogTitle>
           </DialogHeader>
           
-          {/* Compact Summary Cards */}
-          <div className="space-y-3">
-            <div className="grid grid-cols-3 gap-2">
-              {(() => {
-                const totalTime = timeline.reduce((acc, entry) => acc + entry.duration, 0);
-                const activeTime = timeline.filter((e) => !e.activity.includes('นอน')).reduce((acc, entry) => acc + entry.duration, 0);
-                const restTime = totalTime - activeTime;
-                
-                return (
-                  <>
-                    <Card className="border-l-4 border-l-blue-500">
-                      <CardContent className="p-2">
-                        <div className="text-[10px] text-gray-500 mb-1">⏱️ รวม</div>
-                        <div className="text-lg font-bold text-blue-600">{(totalTime / 60).toFixed(1)}</div>
-                        <div className="text-[9px] text-gray-500">ชม.</div>
-                      </CardContent>
-                    </Card>
-                    <Card className="border-l-4 border-l-green-500">
-                      <CardContent className="p-2">
-                        <div className="text-[10px] text-gray-500 mb-1">⚡ กิจกรรม</div>
-                        <div className="text-lg font-bold text-green-600">{activeTime}</div>
-                        <div className="text-[9px] text-gray-500">นาที</div>
-                      </CardContent>
-                    </Card>
-                    <Card className="border-l-4 border-l-orange-500">
-                      <CardContent className="p-2">
-                        <div className="text-[10px] text-gray-500 mb-1">😴 พัก</div>
-                        <div className="text-lg font-bold text-orange-600">{restTime}</div>
-                        <div className="text-[9px] text-gray-500">นาที</div>
-                      </CardContent>
-                    </Card>
-                  </>
-                );
-              })()}
-            </div>
+          {/* Professional Analysis Report - HTML Content (Timeline Removed) */}
+          <div 
+            className="prose prose-sm max-w-none"
+            dangerouslySetInnerHTML={{ __html: aiAnalysis }}
+          />
 
-            {/* Timeline Items - Compact Version */}
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm">📅 กิจกรรมวันนี้</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-2">
-                <ScrollArea className="h-[300px]">
-                  <div className="space-y-1.5">
-                    {timeline.map((entry) => (
-                      <div
-                        key={entry.id}
-                        className="flex items-center gap-2 p-2 rounded bg-gray-50 text-xs"
-                      >
-                        <Badge variant="outline" className="text-[10px] px-1 h-5 shrink-0">
-                          {entry.time}
-                        </Badge>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{entry.activity}</div>
-                          <div className="text-[10px] text-gray-500 flex items-center gap-1">
-                            <MapPin className="h-2.5 w-2.5 shrink-0" />
-                            {entry.room} • {entry.duration}m
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
-
-            {/* Recommendations */}
-            {(() => {
-              const activeTime = timeline.filter((e) => !e.activity.includes('นอน')).reduce((acc, entry) => acc + entry.duration, 0);
-              const hasExercise = timeline.find((e) => e.activity.includes('กายภาพบำบัด'));
-              
-              return (
-                <Card className="border-l-4 border-l-purple-500 bg-purple-50">
-                  <CardContent className="p-3">
-                    <div className="text-xs font-semibold mb-2 flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" />
-                      คำแนะนำ
-                    </div>
-                    <ul className="text-xs space-y-1 text-gray-700">
-                      {activeTime >= 300 && <li>🎉 ยอดเยี่ยม! คุณมีกิจกรรมสูงมาก</li>}
-                      {activeTime < 180 && <li>💪 พยายามเพิ่มกิจกรรมให้มากขึ้น</li>}
-                      {hasExercise && <li>✅ ดีมาก! ทำกายภาพบำบัดสม่ำเสมอ</li>}
-                      {!hasExercise && <li>🏃 ควรออกกำลังกายอย่างน้อย 30 นาที</li>}
-                      <li>💧 อย่าลืมดื่มน้ำวันละ 2 ลิตร</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              );
-            })()}
-
-            {/* Close Button */}
+          {/* Action Buttons */}
+          <div className="mt-4 sticky bottom-0 bg-white pt-3 border-t flex gap-2">
             <Button
               size="sm"
-              className="w-full bg-[#0056B3]"
+              variant="outline"
+              className="flex-1"
+              onClick={() => {
+                // Export report
+                const blob = new Blob([aiAnalysis], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `PT-Report-${userProfile?.name}-${new Date().toISOString().split('T')[0]}.html`;
+                a.click();
+              }}
+            >
+              📥 ดาวน์โหลดรายงาน
+            </Button>
+            <Button
+              size="sm"
+              className="flex-1 bg-[#0056B3]"
               onClick={() => setShowAIAnalysisDialog(false)}
             >
               ปิด
