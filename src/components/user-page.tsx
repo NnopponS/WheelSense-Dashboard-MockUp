@@ -301,292 +301,171 @@ export function UserPage() {
     const activityColor = totalExerciseTime >= 30 ? '#00945E' : totalExerciseTime >= 15 ? '#0056B3' : '#dc2626';
 
     const analysis = `
-<div style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.4; color: #1f2937; font-size: 13px;">
+<div style="font-family: system-ui, -apple-system, sans-serif; line-height: 1.3; color: #1f2937; font-size: 12px;">
   
-  <!-- Header - Compact -->
-  <div style="background: linear-gradient(135deg, #0056B3 0%, #00945E 100%); color: white; padding: 12px 16px; border-radius: 8px; margin-bottom: 12px;">
-    <div style="font-size: 18px; font-weight: bold; margin-bottom: 4px;">🏥 รายงานการประเมินกายภาพบำบัด</div>
-    <div style="font-size: 11px; opacity: 0.9;">${new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} • ${userProfile?.name}</div>
-  </div>
-
-  <!-- Patient Info - Compact Grid -->
+  <!-- Patient Info - Ultra Compact -->
   ${userProfile ? `
-  <div style="background: #f8fafc; padding: 10px; border-radius: 6px; margin-bottom: 12px; border: 1px solid #e2e8f0;">
-    <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #1f2937;">📋 ข้อมูลผู้ป่วย</div>
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 11px;">
-      <div style="padding: 6px; background: white; border-radius: 4px;"><span style="color: #64748b;">อายุ:</span> <strong>${userProfile.age} ปี</strong></div>
-      <div style="padding: 6px; background: white; border-radius: 4px;"><span style="color: #64748b;">BMI:</span> <strong>${bmi}</strong></div>
-      <div style="padding: 6px; background: white; border-radius: 4px;"><span style="color: #64748b;">เลือด:</span> <strong>${userProfile.bloodType}</strong></div>
-    </div>
-    <div style="margin-top: 6px; padding: 6px; background: white; border-radius: 4px; font-size: 11px;">
-      <strong>Dx:</strong> ${userProfile.diagnosis}
-    </div>
+  <div style="background: #f8fafc; padding: 8px; border-radius: 4px; margin-bottom: 8px; border: 1px solid #e2e8f0;">
+    <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #0056B3;">📋 ${userProfile?.name} • ${userProfile.age} ปี • BMI ${bmi} • ${userProfile.bloodType}</div>
+    <div style="font-size: 10px; color: #64748b;">Dx: ${userProfile.diagnosis}</div>
   </div>
   ` : ''}
 
-  <!-- Key Metrics - Compact 2x2 Grid -->
-  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 12px;">
-    <div style="background: #f0fdf4; padding: 10px; border-radius: 6px; border-left: 3px solid #00945E; text-align: center;">
-      <div style="font-size: 10px; color: #64748b;">💪 กายภาพบำบัด</div>
-      <div style="font-size: 22px; font-weight: bold; color: #00945E;">${totalExerciseTime}</div>
-      <div style="font-size: 9px; color: #64748b;">${totalExerciseTime >= 30 ? '✅ ผ่าน' : '⚠️ ต่ำกว่า 30 นาที'}</div>
+  <!-- Key Metrics - Ultra Compact -->
+  <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; margin-bottom: 8px;">
+    <div style="background: #f0fdf4; padding: 6px; border-radius: 4px; text-align: center;">
+      <div style="font-size: 9px; color: #64748b;">💪 PT</div>
+      <div style="font-size: 18px; font-weight: bold; color: #00945E;">${totalExerciseTime}</div>
+      <div style="font-size: 8px;">${totalExerciseTime >= 30 ? '✅' : '⚠️'}</div>
     </div>
-    <div style="background: #fef3f2; padding: 10px; border-radius: 6px; border-left: 3px solid #f59e0b; text-align: center;">
-      <div style="font-size: 10px; color: #64748b;">🪑 นั่งนานสุด</div>
-      <div style="font-size: 22px; font-weight: bold; color: #f59e0b;">${longestSitting}</div>
-      <div style="font-size: 9px; color: #64748b;">${longestSitting > 120 ? '⚠️ เกิน 120' : '✅ ปกติ'}</div>
+    <div style="background: #fef3f2; padding: 6px; border-radius: 4px; text-align: center;">
+      <div style="font-size: 9px; color: #64748b;">🪑 Sit</div>
+      <div style="font-size: 18px; font-weight: bold; color: #f59e0b;">${longestSitting}</div>
+      <div style="font-size: 8px;">${longestSitting > 120 ? '⚠️' : '✅'}</div>
     </div>
-    <div style="background: #fef9f3; padding: 10px; border-radius: 6px; border-left: 3px solid #8b5cf6; text-align: center;">
-      <div style="font-size: 10px; color: #64748b;">🚶 เปลี่ยนตำแหน่ง</div>
-      <div style="font-size: 22px; font-weight: bold; color: #8b5cf6;">${positionChanges}</div>
-      <div style="font-size: 9px; color: #64748b;">${positionChanges >= 5 ? '✅ ดี' : '⚠️ น้อย'}</div>
+    <div style="background: #fef9f3; padding: 6px; border-radius: 4px; text-align: center;">
+      <div style="font-size: 9px; color: #64748b;">🚶 Move</div>
+      <div style="font-size: 18px; font-weight: bold; color: #8b5cf6;">${positionChanges}</div>
+      <div style="font-size: 8px;">${positionChanges >= 5 ? '✅' : '⚠️'}</div>
     </div>
-    <div style="background: #eff6ff; padding: 10px; border-radius: 6px; border-left: 3px solid #3b82f6; text-align: center;">
-      <div style="font-size: 10px; color: #64748b;">📊 Mobility Score</div>
-      <div style="font-size: 22px; font-weight: bold; color: #3b82f6;">${mobilityScore.toFixed(0)}</div>
-      <div style="font-size: 9px; color: #64748b;">/100 ${mobilityScore >= 70 ? '✅' : '⚠️'}</div>
+    <div style="background: #eff6ff; padding: 6px; border-radius: 4px; text-align: center;">
+      <div style="font-size: 9px; color: #64748b;">📊 Score</div>
+      <div style="font-size: 18px; font-weight: bold; color: #3b82f6;">${mobilityScore.toFixed(0)}</div>
+      <div style="font-size: 8px;">${mobilityScore >= 70 ? '✅' : '⚠️'}</div>
     </div>
   </div>
 
-  <!-- Physical Therapy Focus - Compact -->
+  <!-- PT Program - Mini -->
   ${userProfile?.physicalTherapyProgram ? `
-  <div style="background: #fef9f3; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #8b5cf6;">
-    <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #1f2937;">🎯 โปรแกรมกายภาพบำบัด</div>
-    <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">
-      ${userProfile.physicalTherapyProgram.schedule} • ${userProfile.physicalTherapyProgram.duration}
-    </div>
-    <div style="font-size: 11px; color: #374151;">
-      ${userProfile.physicalTherapyProgram.focusAreas.slice(0, 3).map((area, i) => `<div style="padding: 4px 0;">• ${area}</div>`).join('')}
-    </div>
+  <div style="background: #fef9f3; padding: 6px 8px; border-radius: 4px; margin-bottom: 6px; border-left: 2px solid #8b5cf6; font-size: 10px;">
+    <strong>🎯 PT:</strong> ${userProfile.physicalTherapyProgram.schedule.split('(')[0].trim()}
   </div>
   ` : ''}
 
-  <!-- Posture & Pressure - Compact -->
-  <div style="background: white; padding: 12px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
-    <div style="font-size: 14px; font-weight: bold; margin-bottom: 8px; color: #1f2937;">🪑 การจัดการท่านั่งและแผลกดทับ</div>
-    ${longestSitting > 120 ? `
-      <div style="background: #fef2f2; padding: 8px; border-radius: 6px; border-left: 3px solid #dc2626; margin-bottom: 8px;">
-        <div style="font-size: 12px; font-weight: bold; color: #991b1b;">⚠️ เสี่ยงสูง - นั่งต่อเนื่อง ${longestSitting} นาที</div>
-        <div style="font-size: 11px; color: #7f1d1d; margin-top: 4px;">ควรเปลี่ยนท่าทุก 30-45 นาที</div>
+  <!-- Status Summary - Single Line -->
+  <div style="background: ${hasExercise && longestSitting <= 120 ? '#f0fdf4' : '#fef3c7'}; padding: 6px 8px; border-radius: 4px; margin-bottom: 6px; border-left: 2px solid ${hasExercise && longestSitting <= 120 ? '#10b981' : '#f59e0b'}; font-size: 10px;">
+    ${hasExercise ? '✅ PT ผ่าน' : '⚠️ ยัง PT'} • ${longestSitting <= 120 ? '✅ Sit OK' : '⚠️ Sit Long'} • ${positionChanges >= 5 ? '✅ Move OK' : '⚠️ Move Low'} • 🏠 ${mostUsedRoom[0]}
+  </div>
+
+  <!-- Clinical Recommendations - Merged -->
+  <div style="background: white; padding: 8px; border-radius: 4px; margin-bottom: 6px; border: 1px solid #e5e7eb;">
+    <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #1f2937;">💊 คำแนะนำคลินิก</div>
+    <div style="font-size: 10px; color: #374151; line-height: 1.4;">
+      ${totalExerciseTime < 30 ? `⚠️ เพิ่ม PT +${30 - totalExerciseTime} นาที • ` : ''}${longestSitting > 120 ? '⚠️ เปลี่ยนท่าบ่อยขึ้น • ' : ''}${positionChanges < 5 ? '⚠️ เพิ่มการเคลื่อนไหว • ' : ''}💧 ดื่มน้ำ 2-2.5L/วัน
+    </div>
+  </div>
+
+  <!-- Protocol & Goals - Merged Compact -->
+  <div style="background: #fef9f3; padding: 6px 8px; border-radius: 4px; margin-bottom: 6px; border-left: 2px solid #0056B3; font-size: 10px; line-height: 1.4;">
+    <strong>📚 ${userProfile?.diagnosis.includes('Spinal Cord') ? 'SCI' : 'OA'} Protocol:</strong> 
+    ${userProfile?.diagnosis.includes('Spinal Cord') ? `ROM • Strengthen • Transfer • Skin 2×/d • Cardio 20-30m` : `Low-Impact • Quad • Heat/Cold • Weight Mgmt`}
+  </div>
+  <div style="background: #f1f5f9; padding: 6px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 10px; line-height: 1.4;">
+    <strong>🎯 2wk:</strong> PT 30m/d (5d/wk) • เปลี่ยนท่า 30-45m | <strong>3mo:</strong> +20-30% กล้าม • Mobility 80+ • ↓แทรกซ้อน
+  </div>
+
+  <!-- Risk - Mini Grid -->
+  <div style="background: white; padding: 6px; border-radius: 4px; margin-bottom: 6px; border: 1px solid #e5e7eb;">
+    <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #1f2937;">⚕️ ความเสี่ยง</div>
+    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; font-size: 9px;">
+      <div style="padding: 4px; background: ${longestSitting > 120 ? '#fef2f2' : '#f0fdf4'}; border-radius: 3px;">
+        ${longestSitting > 120 ? '🔴 Ulcer: สูง' : '🟢 Ulcer: ต่ำ'}
       </div>
-    ` : `
-      <div style="background: #f0fdf4; padding: 8px; border-radius: 6px; border-left: 3px solid #10b981; margin-bottom: 8px;">
-        <div style="font-size: 12px; font-weight: bold; color: #065f46;">✅ ปลอดภัย - นั่งสูงสุด ${longestSitting} นาที</div>
+      <div style="padding: 4px; background: ${totalExerciseTime < 30 ? '#fef3c7' : '#f0fdf4'}; border-radius: 3px;">
+        ${totalExerciseTime < 30 ? '🟡 Atrophy: กลาง' : '🟢 Atrophy: ต่ำ'}
       </div>
-    `}
-    <div style="font-size: 11px; color: #64748b; background: #f8fafc; padding: 8px; border-radius: 4px;">
-      <strong>คำแนะนำ:</strong> เปลี่ยนท่าทุก 30-45 นาที • ยกสะโพก 10-15 วินาที • ตรวจผิวหนังทุกวัน
-    </div>
-  </div>
-
-  <!-- Exercise Status - Compact -->
-  <div style="background: ${hasExercise ? '#f0fdf4' : '#fef2f2'}; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid ${hasExercise ? '#10b981' : '#dc2626'};">
-    <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #1f2937;">
-      ${hasExercise ? '✅ ทำกายภาพบำบัดแล้ว' : '⚠️ ยังไม่ได้ทำกายภาพบำบัด'}
-    </div>
-    <div style="font-size: 11px; color: ${hasExercise ? '#065f46' : '#991b1b'};">
-      ${hasExercise 
-        ? `เวลา: ${totalExerciseTime} นาที ${totalExerciseTime >= 30 ? '(ผ่านเกณฑ์)' : '(ควรเพิ่ม ' + (30 - totalExerciseTime) + ' นาที)'}` 
-        : `⚠️ ต้องทำอย่างน้อย 30 นาที เพื่อป้องกัน Muscle Atrophy และ Joint Contracture`
-      }
-    </div>
-  </div>
-
-  <!-- Space Utilization - Mini Version -->
-  <div style="background: #f0f9ff; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #3b82f6;">
-    <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #1f2937;">🏠 การใช้พื้นที่</div>
-    <div style="font-size: 11px; color: #1e3a8a;">
-      🥇 ${mostUsedRoom[0]} (${mostUsedRoom[1]} นาที) • การเปลี่ยนตำแหน่ง ${positionChanges} ครั้ง
-    </div>
-  </div>
-
-  <!-- Clinical Status - Compact Badges -->
-  <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
-    <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #1f2937;">💊 สถานะทางคลินิก</div>
-    <div style="display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px;">
-      ${totalExerciseTime >= 30 
-        ? '<div style="padding: 6px 10px; background: #f0fdf4; border-radius: 4px; border: 1px solid #10b981; color: #065f46;"><strong>✅ Exercise Goal</strong></div>'
-        : '<div style="padding: 6px 10px; background: #fef2f2; border-radius: 4px; border: 1px solid #dc2626; color: #991b1b;"><strong>⚠️ ต้องการ +${30 - totalExerciseTime} นาที</strong></div>'
-      }
-      ${longestSitting <= 120 
-        ? '<div style="padding: 6px 10px; background: #f0fdf4; border-radius: 4px; border: 1px solid #10b981; color: #065f46;"><strong>✅ Pressure Safe</strong></div>'
-        : '<div style="padding: 6px 10px; background: #fef2f2; border-radius: 4px; border: 1px solid #dc2626; color: #991b1b;"><strong>⚠️ Pressure Risk</strong></div>'
-      }
-      ${positionChanges >= 5
-        ? '<div style="padding: 6px 10px; background: #f0fdf4; border-radius: 4px; border: 1px solid #10b981; color: #065f46;"><strong>✅ Good Mobility</strong></div>'
-        : '<div style="padding: 6px 10px; background: #fef3c7; border-radius: 4px; border: 1px solid #f59e0b; color: #78350f;"><strong>⚠️ Low Movement</strong></div>'
-      }
-      <div style="padding: 6px 10px; background: #eff6ff; border-radius: 4px; border: 1px solid #3b82f6; color: #1e40af;"><strong>💧 2-2.5L/day</strong></div>
-    </div>
-  </div>
-
-  <!-- Evidence-Based Recommendations - Compact -->
-  <div style="background: #fef9f3; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #0056B3;">
-    <div style="font-size: 13px; font-weight: bold; margin-bottom: 6px; color: #1f2937;">📚 คำแนะนำเฉพาะโรค</div>
-    <div style="font-size: 11px; color: #374151; line-height: 1.5;">
-      ${userProfile?.diagnosis.includes('Spinal Cord') ? `
-        <strong>SCI Protocol:</strong> ROM ทุกวัน • Strengthening แขน-ไหล่ • Transfer Training • Skin Check 2×/วัน • Cardio 20-30 นาที
-      ` : userProfile?.diagnosis.includes('Osteoarthritis') ? `
-        <strong>OA Protocol:</strong> Low-Impact (ว่ายน้ำ, โยคะ) • Quad Strengthening • Heat/Cold Therapy • Weight Management • Pain Control
-      ` : ''}
-    </div>
-  </div>
-
-  <!-- Goals - Compact -->
-  <div style="background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 10px;">
-    <div style="font-size: 12px; color: #374151; line-height: 1.5;">
-      <strong>🎯 เป้าหมาย 2 สัปดาห์:</strong> Exercise 30 นาที/วัน (5 วัน/สัปดาห์) • เปลี่ยนท่าทุก 30-45 นาที<br/>
-      <strong>🎯 เป้าหมาย 3 เดือน:</strong> +20-30% กำลังกล้าม • Mobility 80+ • ลดแทรกซ้อน • พัฒนา ADL
-    </div>
-  </div>
-
-  <!-- Risk Assessment - Compact Grid -->
-  <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
-    <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #1f2937;">⚕️ การประเมินความเสี่ยง</div>
-    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; font-size: 10px;">
-      <div style="padding: 6px; background: ${longestSitting > 120 ? '#fef2f2' : '#f0fdf4'}; border-radius: 4px; border-left: 2px solid ${longestSitting > 120 ? '#dc2626' : '#10b981'};">
-        <strong>${longestSitting > 120 ? '🔴' : '🟢'} Pressure Ulcer:</strong> ${longestSitting > 120 ? 'สูง (3/5)' : 'ต่ำ (1/5)'}
+      <div style="padding: 4px; background: ${positionChanges < 5 ? '#fef3c7' : '#f0fdf4'}; border-radius: 3px;">
+        ${positionChanges < 5 ? '🟡 Joint: กลาง' : '🟢 Joint: ต่ำ'}
       </div>
-      <div style="padding: 6px; background: ${totalExerciseTime < 30 ? '#fef3c7' : '#f0fdf4'}; border-radius: 4px; border-left: 2px solid ${totalExerciseTime < 30 ? '#f59e0b' : '#10b981'};">
-        <strong>${totalExerciseTime < 30 ? '🟡' : '🟢'} Muscle Atrophy:</strong> ${totalExerciseTime < 30 ? 'ปานกลาง (2/5)' : 'ต่ำ (1/5)'}
-      </div>
-      <div style="padding: 6px; background: ${positionChanges < 5 ? '#fef3c7' : '#f0fdf4'}; border-radius: 4px; border-left: 2px solid ${positionChanges < 5 ? '#f59e0b' : '#10b981'};">
-        <strong>${positionChanges < 5 ? '🟡' : '🟢'} Joint Contracture:</strong> ${positionChanges < 5 ? 'ปานกลาง (2/5)' : 'ต่ำ (1/5)'}
-      </div>
-      <div style="padding: 6px; background: #eff6ff; border-radius: 4px; border-left: 2px solid #3b82f6;">
-        <strong>🔵 Cardiovascular:</strong> ปกติ (BP: 120/80)
+      <div style="padding: 4px; background: #eff6ff; border-radius: 3px;">
+        🔵 CV: ปกติ
       </div>
     </div>
   </div>
 
-  <!-- Treatment Plan - Super Compact -->
-  <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
-    <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #1f2937;">📈 แผนการรักษา 12 สัปดาห์</div>
-    <div style="font-size: 11px; color: #374151; line-height: 1.6;">
-      <div style="padding: 6px; background: #f8fafc; border-radius: 4px; margin-bottom: 4px;">
-        <strong>W1-4:</strong> Core/Upper Body • Pressure Relief • Balance • ROM
-      </div>
-      <div style="padding: 6px; background: #f0f9ff; border-radius: 4px; margin-bottom: 4px;">
-        <strong>W5-8:</strong> Progressive Resistance • Transfer Training • ADL • Wheelchair Skills
-      </div>
-      <div style="padding: 6px; background: #f0fdf4; border-radius: 4px;">
-        <strong>W9-12:</strong> Functional Activities • Endurance • Equipment Training • Community Prep
-      </div>
-    </div>
+  <!-- Treatment Plan - Mini -->
+  <div style="background: white; padding: 6px; border-radius: 4px; margin-bottom: 6px; border: 1px solid #e5e7eb; font-size: 9px; line-height: 1.4;">
+    <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #1f2937;">📈 แผน 12wk</div>
+    <div style="padding: 4px; background: #f8fafc; border-radius: 3px; margin-bottom: 2px;"><strong>W1-4:</strong> Core • Pressure • Balance</div>
+    <div style="padding: 4px; background: #f0f9ff; border-radius: 3px; margin-bottom: 2px;"><strong>W5-8:</strong> Resistance • Transfer • ADL</div>
+    <div style="padding: 4px; background: #f0fdf4; border-radius: 3px;"><strong>W9-12:</strong> Function • Endurance • Community</div>
   </div>
 
-  <!-- Vital Signs - Compact -->
-  <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
-    <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #1f2937;">🩺 สัญญาณชีพ</div>
-    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 10px;">
-      <div style="padding: 6px; background: #f0f9ff; border-radius: 4px; text-align: center;">
+  <!-- Vital Signs - Mini Grid -->
+  <div style="background: white; padding: 6px; border-radius: 4px; margin-bottom: 6px; border: 1px solid #e5e7eb;">
+    <div style="font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #1f2937;">🩺 สัญญาณชีพ</div>
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; font-size: 9px;">
+      <div style="padding: 4px; background: #f0f9ff; border-radius: 3px; text-align: center;">
         <div style="color: #64748b;">BP</div>
-        <div style="font-size: 14px; font-weight: bold; color: #0056B3;">120/80</div>
+        <div style="font-size: 12px; font-weight: bold; color: #0056B3;">120/80</div>
       </div>
-      <div style="padding: 6px; background: #fef3f2; border-radius: 4px; text-align: center;">
+      <div style="padding: 4px; background: #fef3f2; border-radius: 3px; text-align: center;">
         <div style="color: #64748b;">HR</div>
-        <div style="font-size: 14px; font-weight: bold; color: #dc2626;">72</div>
+        <div style="font-size: 12px; font-weight: bold; color: #dc2626;">72</div>
       </div>
-      <div style="padding: 6px; background: #f0fdf4; border-radius: 4px; text-align: center;">
+      <div style="padding: 4px; background: #f0fdf4; border-radius: 3px; text-align: center;">
         <div style="color: #64748b;">SpO₂</div>
-        <div style="font-size: 14px; font-weight: bold; color: #00945E;">98%</div>
+        <div style="font-size: 12px; font-weight: bold; color: #00945E;">98%</div>
       </div>
-      <div style="padding: 6px; background: #fef9f3; border-radius: 4px; text-align: center;">
+      <div style="padding: 4px; background: #fef9f3; border-radius: 3px; text-align: center;">
         <div style="color: #64748b;">Temp</div>
-        <div style="font-size: 14px; font-weight: bold; color: #8b5cf6;">36.8°C</div>
+        <div style="font-size: 12px; font-weight: bold; color: #8b5cf6;">36.8°C</div>
       </div>
-      <div style="padding: 6px; background: #fef3c7; border-radius: 4px; text-align: center;">
-        <div style="color: #64748b;">Weight</div>
-        <div style="font-size: 14px; font-weight: bold; color: #f59e0b;">${userProfile?.weight || 68} kg</div>
+      <div style="padding: 4px; background: #fef3c7; border-radius: 3px; text-align: center;">
+        <div style="color: #64748b;">Wt</div>
+        <div style="font-size: 12px; font-weight: bold; color: #f59e0b;">${userProfile?.weight || 68}kg</div>
       </div>
-      <div style="padding: 6px; background: #eff6ff; border-radius: 4px; text-align: center;">
-        <div style="color: #64748b;">Pain (VAS)</div>
-        <div style="font-size: 14px; font-weight: bold; color: #3b82f6;">2/10</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- FIM Score - Compact -->
-  <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
-    <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #1f2937;">📊 FIM Score (Functional Independence)</div>
-    <div style="font-size: 11px; color: #374151;">
-      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 6px;">
-        <div style="padding: 6px; background: #f0fdf4; border-radius: 4px; text-align: center;">
-          <div style="color: #64748b; font-size: 9px;">Self-Care</div>
-          <div style="font-weight: bold; color: #00945E;">35/42</div>
-        </div>
-        <div style="padding: 6px; background: #f0f9ff; border-radius: 4px; text-align: center;">
-          <div style="color: #64748b; font-size: 9px;">Mobility</div>
-          <div style="font-weight: bold; color: #0056B3;">${Math.round(mobilityScore * 0.35)}/35</div>
-        </div>
-        <div style="padding: 6px; background: #f0fdf4; border-radius: 4px; text-align: center;">
-          <div style="color: #64748b; font-size: 9px;">Communication</div>
-          <div style="font-weight: bold; color: #00945E;">14/14</div>
-        </div>
-      </div>
-      <div style="padding: 6px; background: #f8fafc; border-radius: 4px; text-align: center;">
-        <strong>รวม:</strong> ${Math.round(35 + (mobilityScore * 0.35) + 14)}/126 (${Math.round(((35 + (mobilityScore * 0.35) + 14) / 126) * 100)}%)
+      <div style="padding: 4px; background: #eff6ff; border-radius: 3px; text-align: center;">
+        <div style="color: #64748b;">Pain</div>
+        <div style="font-size: 12px; font-weight: bold; color: #3b82f6;">2/10</div>
       </div>
     </div>
   </div>
 
-  <!-- Weekly Progress - Compact -->
-  <div style="background: white; padding: 10px; border-radius: 6px; margin-bottom: 10px; border: 1px solid #e5e7eb;">
-    <div style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #1f2937;">📊 ความก้าวหน้ารายสัปดาห์</div>
-    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; font-size: 10px; margin-bottom: 6px;">
-      <div style="padding: 6px; background: #f0fdf4; border-radius: 4px; text-align: center;">
-        <div style="font-size: 16px; font-weight: bold; color: #00945E;">+12%</div>
-        <div style="color: #64748b;">กล้ามเนื้อ</div>
-      </div>
-      <div style="padding: 6px; background: #f0f9ff; border-radius: 4px; text-align: center;">
-        <div style="font-size: 16px; font-weight: bold; color: #0056B3;">+8%</div>
-        <div style="color: #64748b;">ROM</div>
-      </div>
-      <div style="padding: 6px; background: #fef3f2; border-radius: 4px; text-align: center;">
-        <div style="font-size: 16px; font-weight: bold; color: #dc2626;">-15%</div>
-        <div style="color: #64748b;">ปวด</div>
-      </div>
-      <div style="padding: 6px; background: #fef9f3; border-radius: 4px; text-align: center;">
-        <div style="font-size: 16px; font-weight: bold; color: #8b5cf6;">+18%</div>
-        <div style="color: #64748b;">คล่องตัว</div>
-      </div>
-    </div>
-    <div style="padding: 8px; background: #f1f5f9; border-radius: 4px; font-size: 11px;">
-      <strong>📝 PT Notes:</strong> ผู้ป่วยมีความก้าวหน้าดี • กล้ามเนื้อแขน-ไหล่แข็งแรงขึ้น • การถ่ายน้ำหนักดีขึ้น • แนะนำเพิ่มเป็น 45 นาที/ครั้ง
+  <!-- FIM - Mini -->
+  <div style="background: white; padding: 6px; border-radius: 4px; margin-bottom: 6px; border: 1px solid #e5e7eb; font-size: 9px;">
+    <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #1f2937;">📊 FIM</div>
+    <div style="display: flex; gap: 4px; justify-content: space-between;">
+      <span>Self: 35/42</span>
+      <span>Mobility: ${Math.round(mobilityScore * 0.35)}/35</span>
+      <span>Comm: 14/14</span>
+      <span><strong>รวม: ${Math.round(35 + (mobilityScore * 0.35) + 14)}/126</strong></span>
     </div>
   </div>
 
-  <!-- Next Appointment - Compact -->
-  <div style="background: #eff6ff; padding: 10px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid #3b82f6;">
-    <div style="font-size: 12px; font-weight: bold; margin-bottom: 4px; color: #1f2937;">📅 นัดครั้งต่อไป</div>
-    <div style="font-size: 11px; color: #1e40af;">
-      ${new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} • 9:00 น. • ประเมินความก้าวหน้า
+  <!-- Progress & Next - Mini -->
+  <div style="background: white; padding: 6px; border-radius: 4px; margin-bottom: 6px; border: 1px solid #e5e7eb; font-size: 9px;">
+    <div style="font-size: 10px; font-weight: bold; margin-bottom: 4px; color: #1f2937;">📊 Progress</div>
+    <div style="display: flex; gap: 6px; justify-content: space-between; margin-bottom: 4px;">
+      <span style="color: #00945E;">+12% กล้าม</span>
+      <span style="color: #0056B3;">+8% ROM</span>
+      <span style="color: #dc2626;">-15% ปวด</span>
+      <span style="color: #8b5cf6;">+18% คล่องตัว</span>
+    </div>
+    <div style="padding: 4px; background: #f1f5f9; border-radius: 3px; font-size: 9px;">
+      <strong>📝:</strong> ก้าวหน้าดี • กล้ามแข็งแรงขึ้น • แนะนำ 45m/ครั้ง
     </div>
   </div>
+  
+  <div style="background: #eff6ff; padding: 6px 8px; border-radius: 4px; margin-bottom: 6px; border-left: 2px solid #3b82f6; font-size: 10px;">
+    <strong>📅 นัด:</strong> ${new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })} • 9:00น.
+  </div>
 
-  <!-- Summary - Compact -->
-  <div style="background: linear-gradient(135deg, #0056B3 0%, #00945E 100%); color: white; padding: 14px; border-radius: 8px; text-align: center;">
-    <div style="font-size: 16px; font-weight: bold; margin-bottom: 8px;">✨ สรุปผลการประเมิน</div>
-    <div style="font-size: 12px; line-height: 1.6; opacity: 0.95;">
+  <!-- Summary - Mini -->
+  <div style="background: linear-gradient(135deg, #0056B3 0%, #00945E 100%); color: white; padding: 10px; border-radius: 6px; text-align: center;">
+    <div style="font-size: 14px; font-weight: bold; margin-bottom: 6px;">
+      ${totalExerciseTime >= 30 && longestSitting <= 120 && positionChanges >= 5 ? '🎉 ดีเยี่ยม' : totalExerciseTime >= 15 && longestSitting <= 120 ? '👍 ดี' : '⚠️ ต้องปรับปรุง'}
+    </div>
+    <div style="font-size: 10px; line-height: 1.4; opacity: 0.9;">
       ${totalExerciseTime >= 30 && longestSitting <= 120 && positionChanges >= 5
-        ? `<strong>🎉 ดีเยี่ยม (Excellent)</strong><br/>ปฏิบัติตามแผนการรักษาได้ดี ความเสี่ยงต่ำ รักษาระดับนี้ต่อไป`
+        ? `ปฏิบัติได้ดี ความเสี่ยงต่ำ รักษาระดับนี้ต่อไป`
         : totalExerciseTime >= 15 && longestSitting <= 120
-        ? `<strong>👍 ดี (Good)</strong><br/>มีความพยายาม ควรเพิ่มเวลาออกกำลังกายให้ครบ 30 นาที/วัน`
-        : `<strong>⚠️ ต้องปรับปรุง (Needs Improvement)</strong><br/>พบความเสี่ยง ควรปฏิบัติตามแผนการรักษาอย่างเคร่งครัด`
+        ? `ควรเพิ่ม PT ให้ครบ 30m/d`
+        : `พบความเสี่ยง ปฏิบัติตามแผนฯ`
       }
     </div>
-    <div style="margin-top: 12px; font-size: 11px; opacity: 0.9; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; display: flex; justify-content: space-between; text-align: left;">
-      <div>
-        <strong>👨‍⚕️</strong> ${userProfile?.attendingPhysician?.name || 'N/A'}<br/>
-        <span style="font-size: 10px;">${userProfile?.attendingPhysician?.phone || ''}</span>
-      </div>
-      <div style="text-align: right;">
-        <strong>📅</strong> ${new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}<br/>
-        <span style="font-size: 10px;">${new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })} น.</span>
-      </div>
-    </div>
-    <div style="margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2); font-size: 9px; opacity: 0.7;">
-      AI Physical Therapy Assistant • WheelSense Healthcare System
+    <div style="margin-top: 8px; font-size: 9px; opacity: 0.8; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 6px;">
+      👨‍⚕️ ${(userProfile?.attendingPhysician?.name || 'N/A').split(' ')[0]} • 📅 ${new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
     </div>
   </div>
 
@@ -1212,7 +1091,7 @@ export function UserPage() {
 
       {/* AI Analysis Dialog - Compact & Scrollable */}
       <Dialog open={showAIAnalysisDialog} onOpenChange={setShowAIAnalysisDialog}>
-        <DialogContent className="max-w-2xl h-[80vh] flex flex-col p-0 gap-0">
+        <DialogContent className="max-w-xl md:max-w-2xl h-[75vh] max-h-[600px] flex flex-col p-0 gap-0">
           <DialogHeader className="px-3 md:px-4 pt-3 pb-2 border-b shrink-0 bg-gradient-to-r from-[#0056B3] to-[#00945E]">
             <DialogTitle className="flex items-center gap-2 text-base md:text-lg text-white">
               <Brain className="h-4 w-4 md:h-5 md:w-5" />
@@ -1221,9 +1100,9 @@ export function UserPage() {
           </DialogHeader>
           
           {/* Scrollable Content Area with visible scrollbar */}
-          <div className="flex-1 overflow-y-auto px-3 md:px-4 py-3">
+          <div className="flex-1 overflow-y-auto px-3 md:px-4 py-2" style={{ scrollbarWidth: 'thin' }}>
             <div 
-              className="prose prose-sm max-w-none"
+              className="max-w-none text-sm"
               dangerouslySetInnerHTML={{ __html: aiAnalysis }}
             />
           </div>
