@@ -1210,24 +1210,26 @@ export function UserPage() {
         </div>
       </div>
 
-      {/* AI Analysis Dialog - Professional PT Report (No Timeline) */}
+      {/* AI Analysis Dialog - Scrollable PT Report */}
       <Dialog open={showAIAnalysisDialog} onOpenChange={setShowAIAnalysisDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-4 md:p-6">
-          <DialogHeader className="pb-3">
+        <DialogContent className="max-w-4xl h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-4 md:px-6 pt-4 pb-3 border-b shrink-0">
             <DialogTitle className="flex items-center gap-2 text-lg md:text-xl">
               <Brain className="h-5 w-5 text-[#0056B3]" />
               รายงานการประเมินกายภาพบำบัด
             </DialogTitle>
           </DialogHeader>
           
-          {/* Professional Analysis Report - HTML Content (Timeline Removed) */}
-          <div 
-            className="prose prose-sm max-w-none"
-            dangerouslySetInnerHTML={{ __html: aiAnalysis }}
-          />
+          {/* Scrollable Content Area */}
+          <ScrollArea className="flex-1 px-4 md:px-6">
+            <div 
+              className="prose prose-sm max-w-none py-4"
+              dangerouslySetInnerHTML={{ __html: aiAnalysis }}
+            />
+          </ScrollArea>
 
-          {/* Action Buttons */}
-          <div className="mt-4 sticky bottom-0 bg-white pt-3 border-t flex gap-2">
+          {/* Action Buttons - Fixed at Bottom */}
+          <div className="px-4 md:px-6 py-3 border-t flex gap-2 shrink-0 bg-white">
             <Button
               size="sm"
               variant="outline"
